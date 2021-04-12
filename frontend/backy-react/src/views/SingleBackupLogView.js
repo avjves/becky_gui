@@ -15,6 +15,8 @@ class SingleBackupLogView extends React.Component {
             currentPage: 0,
             logs: [],
         }
+        this.nextPage = this.nextPage.bind(this);
+        this.previousPage = this.previousPage.bind(this);
     }
 
     componentDidMount() {
@@ -36,6 +38,19 @@ class SingleBackupLogView extends React.Component {
             console.log("ERROR", err);
         });
     }
+
+    nextPage() {
+        if(!(this.state.logs.length < this.state.rowsPerPage)) {
+           this.setState({currentPage: this.state.currentPage + 1}, this.fetchLogs); 
+        }
+    }
+
+    previousPage() {
+        if(this.state.currentPage > 0) {
+            this.setState({currentPage: this.state.currentPage - 1}, this.fetchLogs);
+        }
+    }
+
 
     render() {
         console.log("LOLOG")
