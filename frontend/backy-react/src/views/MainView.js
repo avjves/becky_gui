@@ -4,6 +4,7 @@ import history from "../history.js";
 
 import HomeView from './HomeView.js';
 import BackupView from './BackupView.js';
+import SettingsView from './SettingsView.js';
 
 import Navbar from '../objects/Navbar.js';
 
@@ -27,6 +28,9 @@ class MainView extends React.Component {
                                     <div className="col-8">
                                         <div className="card p-2">
                                             <Switch>
+                                                <Route path="/settings">
+                                                    <SettingsView />
+                                                </Route>
                                                 <Route path="/backups">
                                                     <BackupView />
                                                 </Route>
