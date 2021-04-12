@@ -9,7 +9,7 @@ class Navbar extends React.Component {
                     <span className="navbar-brand">Backy</span>
                     <div className="navbar-nav">
                         <Link to="/" className="nav-item nav-link">Home</Link>
-                        <Link to="/backups" className="nav-item nav-link">Backups</Link>
+                        <Link to="/backups/list" className="nav-item nav-link">Backups</Link>
                         <Link to="/settings" className="nav-item nav-link">Settings</Link>
                     </div>
                 </div>

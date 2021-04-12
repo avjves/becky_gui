@@ -55,10 +55,10 @@ class SingleBackupView extends React.Component {
         var newViewId = parseInt(this.props.stageId) + 1;
         if(newViewId > this.state.maxViewId) {
             await this.props.addNewBackup(this.state.backup);
-            history.push('/backups/');
+            history.push('/backups/list');
         }
         else {
-            history.push('/backups/' + this.getBackupId() + '/' + newViewId);
+            history.push('/backups/edit/' + this.getBackupId() + '/' + newViewId);
         }
 
     }
@@ -72,13 +72,13 @@ class SingleBackupView extends React.Component {
         return (
         <Router history={history}>
             <Switch>
-                <Route path="/backups/:backupId/0">
+                <Route path="/backups/edit/:backupId/0">
                     <SingleBackupInitialInfoView updateBackup={this.updateBackup} backup={this.state.backup}/> 
                 </Route>
-                <Route path="/backups/:backupId/1">
+                <Route path="/backups/edit/:backupId/1">
                     <SingleBackupFileSelectionView updateBackup={this.updateBackup} backup={this.state.backup}/> 
                 </Route>
-                <Route path="/backups/:backupId/2">
+                <Route path="/backups/edit/:backupId/2">
                     <SingleBackupProviderSettingsView updateBackup={this.updateBackup} backup={this.state.backup}/> 
                 </Route>
             </Switch>

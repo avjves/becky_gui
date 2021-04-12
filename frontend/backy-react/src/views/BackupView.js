@@ -3,6 +3,7 @@ import { Button } from 'react-bootstrap';
 import { Router, Switch, Route, Link, withRouter } from "react-router-dom";
 
 import SingleBackupView from './SingleBackupView.js';
+import SingleBackupLogView from './SingleBackupLogView.js';
 import BackupListView from './BackupListView.js';
 
 import history from '../history.js';
@@ -21,7 +22,7 @@ class BackupView extends React.Component {
 
     async addNewBackup(backup) {
         console.log(backup); 
-        fetch("http://localhost:8000/backups/" + backup.id + "/", {
+        fetch("http://localhost:8000/backups/edit/" + backup.id + "/", {
             method: 'POST',
             credentials: "include",
             body: JSON.stringify(backup),
@@ -62,10 +63,11 @@ class BackupView extends React.Component {
             <React.Fragment>
                 <Router history={history}>
                     <Switch>
-                        <Route path={'/backups/:backupId/:stageId'} component={(props) => <SingleBackupView backupId={props.match.params.backupId} stageId={props.match.params.stageId} addNewBackup={this.addNewBackup}/>} />
-                        <Route path={'/backups'}>
+                        <Route path={'/backups/edit/:backupId/:stageId'} component={(props) => <SingleBackupView backupId={props.match.params.backupId} stageId={props.match.params.stageId} addNewBackup={this.addNewBackup}/>} />
+                        <Route path={'/backups/list'}>
                             <BackupListView backups={this.state.backups}/>
                         </Route>
+                        <Route path={'/backups/logs/:backupId'} component={(props) => <SingleBackupLogView backupId={props.match.params.backupId} />} />
                     </Switch>
                 </Router>
             </React.Fragment>

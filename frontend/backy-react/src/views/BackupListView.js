@@ -23,7 +23,7 @@ class BackupListView extends React.Component {
                     )
                 })}
             <Button variant='contained' color='primary' type="button">
-                <Link style={{'color': 'white'}} to={"/backups/-1/0"}>Add a new backup. </Link>
+                <Link style={{'color': 'white'}} to={"/backups/edit/-1/0"}>Add a new backup. </Link>
             </Button>
         </div>
         );
