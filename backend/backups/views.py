@@ -6,10 +6,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import View
 
 from backups.models import Backup
+from backups.backupper import Backupper
+from logs.models import BackupLogger
 
 
-
-class BackupView(LoginRequiredMixin, View):
+class BackupView(View):
 
     def get(self, request, **kwargs):
         if 'backup_id' in kwargs:
@@ -81,3 +82,31 @@ class BackupView(LoginRequiredMixin, View):
         backup_model.save()
         return HttpResponse(status=200)
 
+
+
+
+class BackupRunnerView(View):
+
+    def get(self, request, backup_id):
+        backup_model = Backup.objects.get(pk=backup_id)
+        backupper =  Backupper(backup_model)
+        backupper.backup()
+        return HttpResponse(status=200)
+
+
+
+
+class LogsView(View):
+
+    def get(self, request, backup_id, **kwargs):
+        current_page = int(request.GET.get('current_page'))
+        rows_per_page = int(request.GET.get('rows_per_page'))
+
+        backup_model = Backup.objects.get(pk=backup_id)
+        logs = backup_model.log_rows.all().order_by('timestamp')
+
+        start_index = current_page*rows_per_page
+        end_index = (current_page+1)*rows_per_page
+        sliced_logs = logs[start_index:end_index]
+        json_logs = [log.to_json() for log in sliced_logs]
+        return JsonResponse({'logs': json_logs})
