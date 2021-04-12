@@ -103,7 +103,7 @@ class LogsView(View):
         rows_per_page = int(request.GET.get('rows_per_page'))
 
         backup_model = Backup.objects.get(pk=backup_id)
-        logs = backup_model.log_rows.all().order_by('timestamp')
+        logs = backup_model.log_rows.all().order_by('-timestamp')
 
         start_index = current_page*rows_per_page
         end_index = (current_page+1)*rows_per_page
