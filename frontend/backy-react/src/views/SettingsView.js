@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Switch, Route, Link, UseRouteMatch, useParams, withRouter } from "react-router-dom";
+import axios from 'axios';
 
 import SettingsTable from '../objects/SettingsTable.js';
 
@@ -8,8 +8,10 @@ class SettingsView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            settings: {}
+            settings: []
         }
+        this.fetchSettings = this.fetchSettings.bind(this);
+        this.saveSettings = this.saveSettings.bind(this);
     }
 
     componentDidMount() {
@@ -17,10 +19,29 @@ class SettingsView extends React.Component {
     }
 
     fetchSettings() {
+        axios.get("http://localhost:8000/settings/", {})
+        .then((data) => {
+            console.log(data);
+            this.setState({settings: data.data.settings});
+        })
+        .catch((err) => {
+            console.log("ERROR", err);
+        });
 
     }
 
-    saveSettings() {
+    saveSettings(settings) {
+        console.log("saving", settings)
+        axios.post("http://localhost:8000/settings/", {
+            settings: settings
+        })
+        .then((data) => {
+            this.fetchSettings();
+        })
+        .catch((err) => {
+            console.log("ERROR", err);
+        });
+
 
     }
 
@@ -32,4 +53,4 @@ class SettingsView extends React.Component {
     }
 }
 
-export default withRouter(SettingsView);
+export default SettingsView;

@@ -5,13 +5,14 @@ import {  Router, Switch, Route, Link, withRouter } from "react-router-dom";
 
 import history from '../history.js';
 import LogTable from '../objects/LogTable.js';
+import Header from '../objects/Header.js';
 
 class SingleBackupLogView extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            rowsPerPage: 20,
+            rowsPerPage: 5,
             currentPage: 0,
             logs: [],
         }
@@ -53,9 +54,11 @@ class SingleBackupLogView extends React.Component {
 
 
     render() {
-        console.log("LOLOG")
         return (
-            <LogTable logs={this.state.logs} nextPage={this.nextPage} previousPage={this.previousPage} /> 
+            <div>
+                <Header text="Showing logs for a backup:" />
+                <LogTable logs={this.state.logs} nextPage={this.nextPage} previousPage={this.previousPage} /> 
+            </div>
         );
     }
 }

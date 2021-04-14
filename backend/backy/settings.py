@@ -51,8 +51,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'backy',
     'api',
     'backups',
+    'settings',
     'logs',
 ]
 

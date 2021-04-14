@@ -5,20 +5,16 @@ class SettingsTableItem extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {
-
-        }
     }
 
     render() {
-        var setting = this.props.setting;
-        var defaultValue = '';
+        var defaultValue = this.props.value ? this.props.value : '';
         return (
             <div>
                 <Form>
                     <Form.Group controlId="settingName">
                         <Form.Label> {this.props.title}: </Form.Label>
-                        <Form.Control type="text" placeholder="Enter setting value" defaultValue={defaultValue} param={this.props.key} onChange={e =>  this.props.updateValue}/> 
+                        <Form.Control type="text" placeholder="Enter setting value" defaultValue={defaultValue} onChange={(e) =>  this.props.updateValue(this.props.settingKey, e.target.value)}/> 
                     </Form.Group>
                 </Form>
             </div>

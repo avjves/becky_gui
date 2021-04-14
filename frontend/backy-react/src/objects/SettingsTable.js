@@ -7,24 +7,24 @@ class SettingsTable extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            fs_root: '',
-            temp: '',
         }
+        this.updateValue = this.updateValue.bind(this);
     }
 
-    updateValue() {
-
+    updateValue(key, value) {
+        this.setState({[key]: value});
     }
+
 
     render() {
         return (
             <div>
                 <div>
-                    <SettingsTableItem title="File selector root path" key="fs_root" settings={this.props.settings} updateValue={this.updateValue} />
-                    <SettingsTableItem title="Second setting" key="temp" settings={this.props.settings} updateValue={this.updateValue} />
+                    <SettingsTableItem title="File selector root path" settingKey="fs_root" value={this.props.settings.fs_root} updateValue={this.updateValue} />
+                    <SettingsTableItem title="Second setting" settingKey="test_setting" value={this.props.settings.test_setting} updateValue={this.updateValue} />
                 </div>
                 <div>
-                    <Button variant='contained' className="m-1" color='primary' onClick={this.props.saveSettings}> Save settings</Button>
+                    <Button variant='contained' className="m-1" color='primary' onClick={(e) => this.props.saveSettings(this.state)}> Save settings</Button>
                 </div>
             </div>
         )

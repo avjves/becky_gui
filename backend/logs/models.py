@@ -1,5 +1,6 @@
 from django.db import models
 from backups.models import Backup
+from backy.utils import format_timestamp_gui
 
 
 class LogRow(models.Model):
@@ -10,7 +11,9 @@ class LogRow(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
 
     def to_json(self):
-        return {'backup_id': self.backup.id, 'level': self.level, 'tag': self.tag, 'message': self.message, 'timestamp': self.timestamp}
+        return {'backup_id': self.backup.id, 'level': self.level, 'tag': self.tag, 'message': self.message, 'timestamp': format_timestamp_gui(self.timestamp)}
+
+
 
 """
 Backupper that any scanner or provider can use to add logs to specific backup model.

@@ -13,7 +13,8 @@ class BackupView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            backups: []
+            backups: [],
+            visible: false,
         }
         this.fetchBackups = this.fetchBackups.bind(this);
         this.addNewBackup = this.addNewBackup.bind(this);
@@ -48,7 +49,7 @@ class BackupView extends React.Component {
         .then((res) => res.json())
         .then((data) => {
             console.log('Backups', data.backups);
-            this.setState({backups: data.backups});
+            this.setState({backups: data.backups, visible: true});
         })
         .catch((err) => {
             console.log("ERROR", err);
@@ -59,19 +60,24 @@ class BackupView extends React.Component {
 
     render() {
         console.log("PR", this.props)
-        return (
-            <React.Fragment>
-                <Router history={history}>
-                    <Switch>
-                        <Route path={'/backups/edit/:backupId/:stageId'} component={(props) => <SingleBackupView backupId={props.match.params.backupId} stageId={props.match.params.stageId} addNewBackup={this.addNewBackup}/>} />
-                        <Route path={'/backups/list'}>
-                            <BackupListView backups={this.state.backups}/>
-                        </Route>
-                        <Route path={'/backups/logs/:backupId'} component={(props) => <SingleBackupLogView backupId={props.match.params.backupId} />} />
-                    </Switch>
-                </Router>
-            </React.Fragment>
-        );
+        if(this.state.visible) {
+            return (
+                <React.Fragment>
+                    <Router history={history}>
+                        <Switch>
+                            <Route path={'/backups/edit/:backupId/:stageId'} component={(props) => <SingleBackupView backupId={props.match.params.backupId} stageId={props.match.params.stageId} addNewBackup={this.addNewBackup}/>} />
+                            <Route path={'/backups/list'}>
+                                <BackupListView backups={this.state.backups}/>
+                            </Route>
+                            <Route path={'/backups/logs/:backupId'} component={(props) => <SingleBackupLogView backupId={props.match.params.backupId} />} />
+                        </Switch>
+                    </Router>
+                </React.Fragment>
+            );
+        }
+        else {
+            return ('')
+        }
     }
 }
 

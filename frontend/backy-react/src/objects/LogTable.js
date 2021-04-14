@@ -10,8 +10,11 @@ class LogTable extends React.Component {
                 <div>
                     {this.props.logs.map((log, index) => {
                         return (
-                            <div index={index} className="card">
-                                <LogTableItem log={log} />
+                            <div key={index}>
+                                <div className="shadow border">
+                                    <LogTableItem log={log} />
+                                </div>
+                                <hr />
                             </div>
                         )
                     })}
