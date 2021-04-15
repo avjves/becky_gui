@@ -117,30 +117,28 @@ class LogsView(View):
 
 
 class FilesView(View):
-    """ Allows the UI to query found files at a certain path. """
+    """ Allows the UI to query found files at a certain path. Automatically adds the user defined root to all requests. """
+
+
+    user_root = "/home/avjves"
 
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
-        files = os.listdir(path)
+        files_path = self._ensure_default_directory_level(path)
+        files = os.listdir(files_path)
         file_objects = [self._generate_file_object(path, f) for f in files]
         return JsonResponse({'files': file_objects})
 
 
-    def _generate_file_object(self, path, filename):
+    def _generate_file_object(self, directory, filename):
         """
         Given a path, creates a file object.
         TODO: Check if said file is selected for backups.
         """
-        print(path, filename)
-        # name = filename.rsplit("/", 1)[-1
-        name = filename
-        # directory = path.rsplit(name, 1)[0]
-        directory = path
-        print(directory)
-        if not directory: directory = '/'
-        level = self._calculate_directory_level(os.path.join(path, filename))
-        obj = {'filename': name, 'selected': False, 'directory': directory, 'level': level}
-        if os.path.isdir(os.path.join(path, filename)):
+        level = self._calculate_directory_level(os.path.join(directory, filename))
+        obj = {'filename': filename, 'selected': False, 'directory': directory, 'level': level}
+        if self._path_is_directory(directory, filename):
+        # if os.path.isdir(os.path.join(directory, filename)):
             obj['file_type'] = 'directory'
             obj['files'] = []
         else:
@@ -159,3 +157,23 @@ class FilesView(View):
         level = len(path.split("/"))
         return level
 
+
+    def _ensure_default_directory_level(self, path):
+        """
+        Ensures that the default path set by the user is
+        at the beginning of the path.
+        """
+        if not path.startswith(self.user_root):
+            path = os.path.join(self.user_root, path.strip("/"))
+        return path
+
+    def _path_is_directory(self, directory, filename):
+        """
+        Checks whether the given file in in the given directory
+        is a directory. Adds the user defined root to the front.
+        """
+        print(self.user_root, directory, filename)
+        if os.path.isdir(os.path.join(self.user_root, directory.strip('/'), filename.strip('/'))):
+            return True
+        else:
+            return False
