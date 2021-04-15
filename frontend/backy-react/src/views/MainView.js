@@ -16,7 +16,6 @@ class MainView extends React.Component {
 
 
     render() {
-        console.log(history);
         return (
             <Router history={history}>
                 <div id="wrapper">

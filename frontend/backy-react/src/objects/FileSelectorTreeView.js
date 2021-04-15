@@ -22,7 +22,6 @@ class FileSelectorTreeView extends React.Component {
         var files = await this.props.fetchFilesByPath(path);
         files = files.data.files;
         var currentFileTree = this.state.fileTree;
-        //currentFileTree = this.addDirectory(currentFileTree, files[0].directory);
         for(var file of files) {
             var directory = file.directory;
             var currentFile = file.filename;
@@ -32,33 +31,9 @@ class FileSelectorTreeView extends React.Component {
         this.setState({fileTree: currentFileTree});
     }
 
-    addDirectory(fileTree, directoryToAdd) {
-        if(directoryToAdd.length == 0) {
-            return fileTree;
-        }
-        var folders = directoryToAdd.split("/");
-        var steps = [];
-        var cur = fileTree;
-        for(var folder of folders) {
-            if(folder in cur.files) {
-                cur = cur.files[folder];
-            }
-            else {
-                cur.files[folder] = {'fileType': 'directory', 'name': folder, 'files': {}, 'selected': false};
-                cur = cur.files[folder];
-            }
-        }
-        return fileTree;
-    }
-
     addFile(fileTree, file) {
         var fileDirectory = this.getFileDirectory(fileTree, file.directory);
-        console.log("Adding file", file);
-        if(file.filename in fileDirectory.files) {
-            //console.log("File " + file.filename + "already added to tree at " + file.directory);
-        }
-        else {
-            //var newFile = {'fileType': 'file', 'name': fileToAdd, 'selected': isSelected};
+        if(!(file.filename in fileDirectory.files)) {
             fileDirectory.files[file.filename] = file;
         }
         return fileTree;
@@ -84,12 +59,7 @@ class FileSelectorTreeView extends React.Component {
         }
     }
 
-    selectFile(event) {
-        console.log("selected file", event.target.innerHTML)
-    }
-
     toggleFile(directory, file) {
-        console.log("Toggling file", file);
         var currentFileTree = this.state.fileTree;
         var fileDirectory = this.getFileDirectory(currentFileTree, this.makeDirPath(directory, file));
         if(fileDirectory.open) {
@@ -120,9 +90,8 @@ class FileSelectorTreeView extends React.Component {
 
     render() {
         var treeElements = this.getDirectoryFilesAsHTML(this.state.fileTree);
-        console.log(this.state.fileTree);
         return (
-            <div style={{'height': '200px', 'height': '500px', 'overflow': 'auto'}} className="m-2 p-1 border">
+            <div style={{'height': '200px', 'height': '500px', 'overflowX': 'auto', 'whiteSpace': 'nowrap'}} className="m-2 p-1 border">
                 {treeElements} 
             </div>
         );

@@ -23,7 +23,6 @@ class SingleBackupInitialInfoView extends React.Component {
 
     
     render() {
-        console.log(this.props)
         var defaultValues = {
             'name': this.props.backup.name ? this.props.backup.name : '',
             'running': this.props.backup.running ? 1 : 0,

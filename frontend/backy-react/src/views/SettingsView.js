@@ -21,7 +21,6 @@ class SettingsView extends React.Component {
     fetchSettings() {
         axios.get("http://localhost:8000/settings/", {})
         .then((data) => {
-            console.log(data);
             this.setState({settings: data.data.settings});
         })
         .catch((err) => {
@@ -31,7 +30,6 @@ class SettingsView extends React.Component {
     }
 
     saveSettings(settings) {
-        console.log("saving", settings)
         axios.post("http://localhost:8000/settings/", {
             settings: settings
         })

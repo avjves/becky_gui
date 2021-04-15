@@ -22,7 +22,6 @@ class BackupView extends React.Component {
 
 
     async addNewBackup(backup) {
-        console.log(backup); 
         fetch("http://localhost:8000/backups/edit/" + backup.id + "/", {
             method: 'POST',
             credentials: "include",
@@ -48,7 +47,6 @@ class BackupView extends React.Component {
         })
         .then((res) => res.json())
         .then((data) => {
-            console.log('Backups', data.backups);
             this.setState({backups: data.backups, visible: true});
         })
         .catch((err) => {
@@ -59,7 +57,6 @@ class BackupView extends React.Component {
 
 
     render() {
-        console.log("PR", this.props)
         if(this.state.visible) {
             return (
                 <React.Fragment>
