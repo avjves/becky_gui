@@ -10,15 +10,22 @@ class SingleBackupFileSelectionView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            path: null
+            selections: {}
         }
         this.onClickNextButton = this.onClickNextButton.bind(this);
         this.fetchFilesByPath = this.fetchFilesByPath.bind(this);
+        this.updateFileSelection = this.updateFileSelection.bind(this);
     }
 
 
     onClickNextButton() {
         this.props.updateBackup(this.state);
+    }
+
+    updateFileSelection(filePath, selected) {
+        var currentSelections = this.state.selections; 
+        currentSelections[filePath] = selected;
+        this.setState({selections: currentSelections});
     }
 
     async fetchFilesByPath(path) {
@@ -35,16 +42,10 @@ class SingleBackupFileSelectionView extends React.Component {
         }
         return (
             <div>
-                <Form>
-                    <Form.Group controlId="formName">
-                        <Form.Label> Path: </Form.Label>
-                        <Form.Control type="text" placeholder="Enter filepath to be backupped" defaultValue={defaultValues.path} onChange={e =>  this.setState({path: e.target.value})}/> 
-                    </Form.Group>
-                    <Button variant="contained" color='primary' type="button" onClick={this.onClickNextButton}>
-                        Next
-                    </Button>
-                </Form>
-                <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} />
+                <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} updateFileSelection={this.updateFileSelection}/>
+                <Button variant="contained" color='primary' type="button" onClick={this.onClickNextButton}>
+                    Next
+                </Button>
             </div>
         );
     }

@@ -45,10 +45,30 @@ class BackupView(View):
         These are values that all Backup models have and are directly
         part of the model, instead of being a generic parameter value.
         """
-        for field in ['name', 'provider', 'path', 'running']:
+        for field in ['name', 'provider', 'running']:
             if field in backup_data:
                 setattr(backup_model, field, backup_data[field])
                 del backup_data[field]
+
+
+    def _add_files_to_backup(self, backup_model, backup_data):
+        """
+        Goes through all user provided selections and updates the files to backup 
+        accordingly. User may send completely new selections or old ones that 
+        turn off (i.e. delete a BackupFile model) a backup. 
+        """
+        for selection_path, selection_state in backup_data['selections'].items():
+            if selection_state == 'add':
+                bf, created = BackupFile.objects.get_or_create(backup=backup_model, path=selection_path)
+                bf.save()
+            else:
+                try:
+                    bf = BackupFile.objects.get(backup=backup_model, path=selection_path)
+                    bf.delete()
+                except ObjectDoesNotExist:
+                    pass
+
+                
 
     def _add_provider_specific_values(self, backup_model, backup_data):
         """
@@ -83,6 +103,7 @@ class BackupView(View):
         """
         del backup_data['id'] # Let's not even attempt to change Django IDs
         self._add_global_values(backup_model, backup_data)
+        self._add_files_to_backup(backup_model, backup_data)
         self._add_provider_specific_values(backup_model, backup_data)
         backup_model.save()
         return HttpResponse(status=200)

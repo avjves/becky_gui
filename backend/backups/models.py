@@ -24,6 +24,9 @@ class Backup(models.Model):
             params[parameter.key] = parameter.value
         return params
 
+class BackupFile(models.Model):
+    path = models.TextField(null=False)
+    backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='files')
 
 
 class BackupParameter(models.Model):
