@@ -131,12 +131,31 @@ class FilesView(View):
         Given a path, creates a file object.
         TODO: Check if said file is selected for backups.
         """
-        name = filename.rsplit("/", 1)[-1]
-        directory = name.rsplit(name, 1)[0]
-        obj = {'filename': name, 'selected': False, 'directory': directory}
+        print(path, filename)
+        # name = filename.rsplit("/", 1)[-1
+        name = filename
+        # directory = path.rsplit(name, 1)[0]
+        directory = path
+        print(directory)
+        if not directory: directory = '/'
+        level = self._calculate_directory_level(os.path.join(path, filename))
+        obj = {'filename': name, 'selected': False, 'directory': directory, 'level': level}
         if os.path.isdir(os.path.join(path, filename)):
             obj['file_type'] = 'directory'
             obj['files'] = []
         else:
             obj['file_type'] = 'file'
         return obj
+
+    def _calculate_directory_level(self, path):
+        """
+        Given a path, calculates its level, i.e how many folders
+        deep is it from the designed root level.
+        TODO: Adhere to root setting.
+        """
+        root = "/"
+        path = path.split(root, 1)[1]
+        if not path: return 0
+        level = len(path.split("/"))
+        return level
+
