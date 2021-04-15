@@ -1,4 +1,5 @@
 import json
+import os
 
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
@@ -11,6 +12,7 @@ from logs.models import BackupLogger
 
 
 class BackupView(View):
+    """ Handles showing, adding and editing the Backups and their parameters. """
 
     def get(self, request, **kwargs):
         if 'backup_id' in kwargs:
@@ -86,6 +88,7 @@ class BackupView(View):
 
 
 class BackupRunnerView(View):
+    """ For now, the only way to start a backup process. """
 
     def get(self, request, backup_id):
         backup_model = Backup.objects.get(pk=backup_id)
@@ -97,6 +100,7 @@ class BackupRunnerView(View):
 
 
 class LogsView(View):
+    """ In charge of returning any logs saved during the backup process. """
 
     def get(self, request, backup_id, **kwargs):
         current_page = int(request.GET.get('current_page'))
@@ -110,3 +114,29 @@ class LogsView(View):
         sliced_logs = logs[start_index:end_index]
         json_logs = [log.to_json() for log in sliced_logs]
         return JsonResponse({'logs': json_logs})
+
+
+class FilesView(View):
+    """ Allows the UI to query found files at a certain path. """
+
+    def get(self, request, backup_id, **kwargs):
+        path = request.GET.get('path')
+        files = os.listdir(path)
+        file_objects = [self._generate_file_object(path, f) for f in files]
+        return JsonResponse({'files': file_objects})
+
+
+    def _generate_file_object(self, path, filename):
+        """
+        Given a path, creates a file object.
+        TODO: Check if said file is selected for backups.
+        """
+        name = filename.rsplit("/", 1)[-1]
+        directory = name.rsplit(name, 1)[0]
+        obj = {'filename': name, 'selected': False, 'directory': directory}
+        if os.path.isdir(os.path.join(path, filename)):
+            obj['file_type'] = 'directory'
+            obj['files'] = []
+        else:
+            obj['file_type'] = 'file'
+        return obj

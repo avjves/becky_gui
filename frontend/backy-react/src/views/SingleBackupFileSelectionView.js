@@ -1,7 +1,8 @@
 import React from "react";
 import { Form } from 'react-bootstrap';
 import Button from "@material-ui/core/Button";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import axios from 'axios';
+import FileSelectorTreeView from '../objects/FileSelectorTreeView.js';
 
 
 class SingleBackupFileSelectionView extends React.Component {
@@ -11,8 +12,8 @@ class SingleBackupFileSelectionView extends React.Component {
         this.state = {
             path: null
         }
-
         this.onClickNextButton = this.onClickNextButton.bind(this);
+        this.fetchFilesByPath = this.fetchFilesByPath.bind(this);
     }
 
 
@@ -20,6 +21,13 @@ class SingleBackupFileSelectionView extends React.Component {
         this.props.updateBackup(this.state);
     }
 
+    async fetchFilesByPath(path) {
+        return axios.get("http://localhost:8000/backups/files/" + this.props.backup.id, {
+            params: {
+                path: path,
+            }
+        })
+    }
     
     render() {
         var defaultValues = {
@@ -36,6 +44,7 @@ class SingleBackupFileSelectionView extends React.Component {
                         Next
                     </Button>
                 </Form>
+                <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} />
             </div>
         );
     }
