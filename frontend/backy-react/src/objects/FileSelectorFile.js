@@ -35,6 +35,17 @@ class FileSelectorFile extends React.Component {
         return icon;
     }
 
+    getBackgroundColor(fileType) {
+        var color = null;
+        if(fileType == 'file') {
+            color = "rgba(30, 213, 250, 0.1)"
+        }
+        else {
+            color = "rgba(239, 250, 30, 0.1)" 
+        }
+        return color;
+    }
+
     toggleFile() {
         if(this.props.file.file_type == 'directory') {
             console.log(this.props.file);
@@ -46,10 +57,11 @@ class FileSelectorFile extends React.Component {
         var leftMargin = 25*this.props.level;
         var fileIcon = this.getFileIcon(this.props.fileType);
         var statusIcon = this.getStatusIcon(this.props.fileType, this.props.file.open);
+        var backgroundColor = this.getBackgroundColor(this.props.file.file_type);
 
         return (
-            <div>
-                <div style={{'marginLeft': leftMargin}} className="row">
+            <div className="">
+                <div style={{'backgroundColor': backgroundColor, 'marginLeft': leftMargin}} className="row pt-2 shadow">
 
                     <div className="col-1" onClick={this.toggleFile}>
                         {statusIcon}
@@ -74,7 +86,7 @@ class FileSelectorFile extends React.Component {
                         <span>{this.props.filename}</span>
                     </div>
                 </div>
-                <hr />
+                    <hr style={{'margin': 0}}/>
             </div>
         );
     }
