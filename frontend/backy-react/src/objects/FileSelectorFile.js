@@ -63,16 +63,16 @@ class FileSelectorFile extends React.Component {
             <div className="">
                 <div style={{'backgroundColor': backgroundColor, 'marginLeft': leftMargin}} className="row pt-2 shadow">
 
-                    <div className="col-1" onClick={this.toggleFile}>
+                    <div className="pl-1 mr-3" onClick={this.toggleFile}>
                         {statusIcon}
                     </div>
 
-                    <div className="col-1">
+                    <div className="mr-3">
                         {fileIcon}
                     </div>
 
 
-                    <div className="col-1">
+                    <div className="mr-3">
                         <Form>
                             <Form.Group className="d-flex" controlId="formSelected">
                                 <Form.Check type="checkbox"/>
@@ -82,7 +82,7 @@ class FileSelectorFile extends React.Component {
 
 
                     
-                    <div className="col-9">
+                    <div>
                         <span>{this.props.filename}</span>
                     </div>
                 </div>
