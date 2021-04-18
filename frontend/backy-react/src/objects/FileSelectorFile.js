@@ -87,11 +87,10 @@ class FileSelectorFile extends React.Component {
                     <div className="mr-3">
                         <Form>
                             <Form.Group className="d-flex" controlId="formSelected">
-                                <Form.Check type="checkbox" onClick={this.checkFile}/>
+                                <Form.Check type="checkbox" onClick={this.checkFile} defaultChecked={this.props.file.selected}/>
                             </Form.Group>
                         </Form>
                     </div>
-
 
                     
                     <div>

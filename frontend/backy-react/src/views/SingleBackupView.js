@@ -69,6 +69,7 @@ class SingleBackupView extends React.Component {
     }
 
     render() {
+        console.log(this.state.backup);
         return (
         <Router history={history}>
             <Switch>

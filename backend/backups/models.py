@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class Backup(models.Model):
@@ -11,8 +12,12 @@ class Backup(models.Model):
 
     def to_detailed_json(self):
         json_output = self.to_simple_json()
-        for parameter in self.parameters.all():
-            json_output[parameter.key] = parameter.value
+        json_output.update(self.get_provider_parameters())
+        file_selections = {}
+        for backup_file in self.files.all():
+            file_selections[backup_file.path] = True
+        json_output['selections'] = file_selections
+
         return json_output
 
     def get_backup_provider(self):
@@ -44,6 +49,25 @@ class Backup(models.Model):
         """
         parameter = self.parameters.get(key=key)
         return parameter
+
+    def get_backup_file(self, path):
+        """
+        Checks whether the backup contains a file with the given path.
+        Returns a BackupFile object if it exists, otherwise None.
+        """
+        try:
+            backup_file = self.files.get(path=path)
+            return backup_file
+        except ObjectDoesNotExist:
+            return None
+
+    def get_all_backup_files(self):
+        """
+        Returns all backup file paths tied to this model as a list.
+        """
+        backup_files = self.files.all()
+        backup_files = [bf.path for bf in backup_files]
+        return backup_files
 
 
 class BackupFile(models.Model):

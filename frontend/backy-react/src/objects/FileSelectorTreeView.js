@@ -35,6 +35,7 @@ class FileSelectorTreeView extends React.Component {
     addFile(fileTree, file) {
         var fileDirectory = this.getFileDirectory(fileTree, file.directory);
         if(!(file.filename in fileDirectory.files)) {
+            console.log("Adding", file)
             fileDirectory.files[file.filename] = file;
         }
         return fileTree;

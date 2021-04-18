@@ -9,6 +9,7 @@ from django.views.generic.base import View
 
 from backups.models import Backup, BackupFile
 from backups.backupper import Backupper
+from backy.utils import join_file_path
 from settings.models import GlobalParameter
 from logs.models import BackupLogger
 
@@ -59,6 +60,7 @@ class BackupView(View):
         turn off (i.e. delete a BackupFile model) a backup. 
         """
         for selection_path, selection_state in backup_data['selections'].items():
+            selection_path = join_file_path(self._get_user_root(backup_model), selection_path)
             if selection_state == True:
                 bf, created = BackupFile.objects.get_or_create(backup=backup_model, path=selection_path)
                 bf.save()
@@ -68,6 +70,7 @@ class BackupView(View):
                     bf.delete()
                 except ObjectDoesNotExist:
                     pass
+        del backup_data['selections']
 
                 
 
@@ -109,6 +112,17 @@ class BackupView(View):
         backup_model.save()
         return HttpResponse(status=200)
 
+    def _get_user_root(self, backup_model=None):
+        """
+        Queries for the user root, if it hasn't already been queried.
+        Saves the user root to this class, so other funcions can access it as well.
+        """
+        if backup_model and backup_model.pk:
+            self.user_root = backup_model.get_parameter('fs_root').value
+        else:
+            self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
+        return self.user_root
+
 
 
 
@@ -146,10 +160,11 @@ class FilesView(View):
 
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
-        self._get_user_root(backup_id) # Save backup_id to the model once, so we don't have to pass it around to all functions
+        backup_model, created = Backup.objects.get_or_create(pk=backup_id) # We create a temp backup model if id was not found = new empty backup
+        self._get_user_root(backup_model) # Save backup_id to the model once, so we don't have to pass it around to all functions
         files_path = self._ensure_default_directory_level(path)
         files = os.listdir(files_path)
-        file_objects = [self._generate_file_object(path, f, backup_id) for f in files]
+        file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
         return JsonResponse({'files': file_objects})
 
 
@@ -158,7 +173,7 @@ class FilesView(View):
         Given a path, creates a file object.
         TODO: Check if said file is selected for backups.
         """
-        level = self._calculate_directory_level(self._join_path(directory, filename))
+        level = self._calculate_directory_level(join_file_path(directory, filename))
         obj = {'filename': filename, 'selected': False, 'directory': directory, 'level': level}
         obj['selected'] = self._check_file_selection(directory, filename, backup_id)
         if self._path_is_directory(directory, filename):
@@ -179,15 +194,16 @@ class FilesView(View):
         level = len(path.split("/"))
         return level
 
-    def _check_file_selection(self, directory, filename, backup_id):
+    def _check_file_selection(self, directory, filename, backup_model):
         """
         Checks whether the given file/folder in the given directory has been saved
         for backing up.
         """
-        path = self._join_path(self._get_user_root(), directory, filename)
-        try:
-            return BackupFile.objects.get(backup__id=backup_id, path=path).exists()
-        except ObjectDoesNotExist:
+        path = join_file_path(self._get_user_root(), directory, filename)
+        backup_file = backup_model.get_backup_file(path)
+        if backup_file:
+            return True
+        else:
             return False
 
     def _ensure_default_directory_level(self, path):
@@ -205,29 +221,18 @@ class FilesView(View):
         Checks whether the given file in in the given directory
         is a directory. Adds the user defined root to the front.
         """
-        if os.path.isdir(self._join_path(self._get_user_root(), directory, filename)):
+        if os.path.isdir(join_file_path(self._get_user_root(), directory, filename)):
             return True
         else:
             return False
 
-    def _get_user_root(self, backup_id=None):
+    def _get_user_root(self, backup_model=None):
         """
         Queries for the user root, if it hasn't already been queried.
         Saves the user root to this class, so other funcions can access it as well.
         """
-        if backup_id and backup_id != "-1":
-            backup_model = Backup.objects.get(backup_id)
+        if backup_model and backup_model.pk != -1:
             self.user_root = backup_model.get_parameter('fs_root').value
         else:
             self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
         return self.user_root
-
-    def _join_path(self, *args):
-        """
-        Preprocesses the given values and runs them through os.path.join.
-        """
-        args = list(args)
-        for i in range(1, len(args)): # First value can start with /
-            args[i] = args[i].strip('/')
-        return os.path.join(*args)
-

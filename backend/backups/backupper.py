@@ -25,7 +25,8 @@ class Backupper:
         On subsequent runs it just scans for new/changed files and scans those.
         """
         print("Starting file scanning...")
-        self.scanner.scan_files()
+        files_to_scan = self._get_files_to_scan()
+        self.scanner.scan_files(files_to_scan)
         print("Starting file backing...")
         self.backup_provider.backup_files(self.scanner.get_changed_files())
         print("Starting file marking...")
@@ -40,7 +41,9 @@ class Backupper:
         backup_provider = self.backup_model.get_backup_provider()
         parameters = self.backup_model.get_provider_parameters()
         if backup_provider == 'local':
-            provider = providers.local_provider.LocalBackupProvider(parameters, self.logger)
+            provider = providers.local_provider.LocalBackupProvider(parameters, self.logger, self.backup_model)
+        else:
+            raise providers.exceptions.ProviderNotSupportedException(backup_provider)
         return provider
 
     def _get_file_scanner(self):
@@ -48,8 +51,15 @@ class Backupper:
         Returns a scanner object that will be used to scan new / changed files on the system.
         """
         parameters = self.backup_model.get_provider_parameters()
-        scanner = scanners.local_scanner.LocalFilesScanner(parameters, self.logger)
+        scanner = scanners.local_scanner.LocalFilesScanner(parameters, self.logger, self.backup_model)
         return scanner
+
+    def _get_files_to_scan(self):
+        """
+        Gets files/folders to scan from the backup model.
+        """
+        files_to_scan = self.backup_model.get_all_backup_files()
+        return files_to_scan
 
 
     def _get_logger(self):

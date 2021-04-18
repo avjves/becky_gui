@@ -42,7 +42,7 @@ class SingleBackupFileSelectionView extends React.Component {
         }
         return (
             <div>
-                <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} addFileSelection={this.addFileSelection}/>
+                <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} addFileSelection={this.addFileSelection} />
                 <Button variant="contained" color='primary' type="button" onClick={this.onClickNextButton}>
                     Next
                 </Button>

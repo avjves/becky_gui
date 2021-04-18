@@ -12,9 +12,10 @@ its results.
 
 class LocalFilesScanner(BaseScanner):
     
-        def __init__(self, parameters, logger):
+        def __init__(self, parameters, logger, backup_model):
             self.parameters = parameters
             self.logger = logger
+            self.backup_model = backup_model
             self.tag = 'LocalFilesScanner'
 
         def get_changed_files(self):
@@ -40,16 +41,18 @@ class LocalFilesScanner(BaseScanner):
             db.close()
 
 
-        def scan_files(self):
+        def scan_files(self, backup_files):
             """
             Starts the file scanning procedure.
             Looks at the path from the parameters to see where 
             it should start scanning for files to be backed up.
             """
             self._log('INFO', 'Started file scanning.')
-            # starting_path = self.parameters['path']
-            starting_path = '/home/avjves/projects'
-            scanned_files = self._scan_local_files(starting_path)
+            scanned_files = []
+            for file_path in backup_files:
+                self._log('DEBUG', 'Scanning for files from selected path {}'.format(file_path))
+            # starting_path = '/home/avjves/projects'
+                scanned_files += self._scan_local_files(file_path)
             self._log('INFO', 'Finished file scanning.')
             db = self._open_db_connection()
             self._log('INFO', 'Starting file comparisions.')
@@ -64,7 +67,8 @@ class LocalFilesScanner(BaseScanner):
             Returns a opened connection to said database.
             """
             # if not os.path.exists(self.parameters['database_location']):
-            database_location = '/home/avjves/fs.sqlite3'
+            # database_location = '/home/avjves/fs.sqlite3'
+            database_location = '/home/avjves/dbs/{}.sqlite3'.format(self.backup_model.name)
             # if not os.path.exists(database_location):
             db = shelve.open(database_location)
             return db

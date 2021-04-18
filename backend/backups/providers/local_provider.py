@@ -8,9 +8,10 @@ to another, within a local system.
 """
 class LocalBackupProvider(BaseProvider):
     
-    def __init__(self, parameters, logger):
+    def __init__(self, parameters, logger, backup_model):
         self.parameters = parameters
         self.logger = logger
+        self.backup_model = backup_model
         self.tag = 'LocalBackupProvider'
 
     def backup_files(self, list_of_files):
@@ -28,17 +29,16 @@ class LocalBackupProvider(BaseProvider):
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
         for file_in_index, file_in in enumerate(list_of_files):
             file_out = self._generate_output_path(file_in, starting_path, copy_path)
-            self._log('DEBUG', 'File in: {} File out: {}'.format(file_in, file_out))
             self._copy_file(file_in, file_out)
             if file_in_index % 1000 == 0:
-                self._log('INFO', '{} new files backed up.'.format(file_in_index))
+                self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
+        self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))
 
     def _copy_file(self, file_in, file_out):
         """
         Receives a single file that should be copied to the copy folder.
         First checks that a proper folder exists before attempting a copy.
         """
-        print(file_in, file_out)
         if os.path.exists(file_out):
             return
         if os.path.isdir(file_in):

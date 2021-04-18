@@ -27,7 +27,7 @@ class BackupListObject extends React.Component {
                     <span>Path: {this.props.backup.path}</span><br />
                 </div>
                 <div className="col-2 mt-1">
-                    <Button variant='contained' className="m-1" color='primary' component={Link} to={"/backups/" + this.props.backup.id + "/0"}> Edit </Button>
+                    <Button variant='contained' className="m-1" color='primary' component={Link} to={"/backups/edit/" + this.props.backup.id + "/0"}> Edit </Button>
                     <Button variant='contained' className="m-1" color='primary' onClick={this.run}> run </Button>
                     <Button variant='contained' className="m-1" color='primary' component={Link} to={"/backups/logs/" + this.props.backup.id}>Show logs</Button>
                 </div>
