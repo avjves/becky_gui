@@ -16,7 +16,7 @@ class SingleBackupProviderSettingsView extends React.Component {
         this.state = {
             providerDropdownText: 'Select a provider:',
             provider: this.props.backup.provider,
-            providerSettings: JSON.parse(this.props.backup.providerSettings),
+            providerSettings: this.props.backup.providerSettings,
         }
 
         this.onClickNextButton = this.onClickNextButton.bind(this);

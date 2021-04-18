@@ -13,7 +13,7 @@ class SingleBackupView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            backup: {'id': this.props.backupId, 'provider': '', 'providerSettings': "{}"},
+            backup: {'id': this.props.backupId, 'provider': '', 'providerSettings': {}},
             maxViewId: 2
         }
         this.updateBackup = this.updateBackup.bind(this);
