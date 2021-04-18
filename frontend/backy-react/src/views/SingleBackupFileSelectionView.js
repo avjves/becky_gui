@@ -14,7 +14,7 @@ class SingleBackupFileSelectionView extends React.Component {
         }
         this.onClickNextButton = this.onClickNextButton.bind(this);
         this.fetchFilesByPath = this.fetchFilesByPath.bind(this);
-        this.updateFileSelection = this.updateFileSelection.bind(this);
+        this.addFileSelection = this.addFileSelection.bind(this);
     }
 
 
@@ -22,7 +22,7 @@ class SingleBackupFileSelectionView extends React.Component {
         this.props.updateBackup(this.state);
     }
 
-    updateFileSelection(filePath, selected) {
+    addFileSelection(filePath, selected) {
         var currentSelections = this.state.selections; 
         currentSelections[filePath] = selected;
         this.setState({selections: currentSelections});
@@ -42,7 +42,7 @@ class SingleBackupFileSelectionView extends React.Component {
         }
         return (
             <div>
-                <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} updateFileSelection={this.updateFileSelection}/>
+                <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} addFileSelection={this.addFileSelection}/>
                 <Button variant="contained" color='primary' type="button" onClick={this.onClickNextButton}>
                     Next
                 </Button>

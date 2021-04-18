@@ -32,8 +32,9 @@ class BackupView(View):
         backup_data = json.loads(request.body)
         if backup_id == -1: # New Backup!
             backup = Backup()
-            backup.user_root = GlobalParameter.get_global_parameter(key='fs_root')
             backup.save()
+            fs_root = GlobalParameter.get_global_parameter(key='fs_root')
+            backup.add_parameter(key='fs_root', value=fs_root)
         else:
             backup = Backup.objects.get(pk=backup_id)
         self._update_backup(request, backup, backup_data)
@@ -58,7 +59,7 @@ class BackupView(View):
         turn off (i.e. delete a BackupFile model) a backup. 
         """
         for selection_path, selection_state in backup_data['selections'].items():
-            if selection_state == 'add':
+            if selection_state == True:
                 bf, created = BackupFile.objects.get_or_create(backup=backup_model, path=selection_path)
                 bf.save()
             else:
@@ -216,7 +217,7 @@ class FilesView(View):
         """
         if backup_id and backup_id != "-1":
             backup_model = Backup.objects.get(backup_id)
-            self.user_root = backup_model.user_root
+            self.user_root = backup_model.get_parameter('fs_root').value
         else:
             self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
         return self.user_root

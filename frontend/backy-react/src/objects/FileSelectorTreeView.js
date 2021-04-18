@@ -12,6 +12,7 @@ class FileSelectorTreeView extends React.Component {
         }
         this.updateFileTree = this.updateFileTree.bind(this);
         this.toggleFile = this.toggleFile.bind(this);
+        this.getDirectoryFilesAsHTML = this.getDirectoryFilesAsHTML.bind(this);
     }
 
     componentDidMount() {
@@ -81,10 +82,10 @@ class FileSelectorTreeView extends React.Component {
                 files.push(this.getDirectoryFilesAsHTML(fileData));
             }
             else {
-                files.push(<FileSelectorFile file={fileData} path={fileData.path} fileType="file" filename={fileData.filename} selectFile={this.selectFile} level={directory.level+1}/>);
+                files.push(<FileSelectorFile file={fileData} path={fileData.path} addFileSelection={this.props.addFileSelection} fileType="file" filename={fileData.filename} selectFile={this.selectFile} level={directory.level+1}/>);
             }
         }
-        return <FileSelectorFolder file={directory} toggleFile={this.toggleFile} fileType="directory" filename={directory.filename} files={files} status={directory.status} level={directory.level}/>
+        return <FileSelectorFolder file={directory} toggleFile={this.toggleFile} addFileSelection={this.props.addFileSelection} fileType="directory" filename={directory.filename} files={files} status={directory.status} level={directory.level}/>
 
     }
 

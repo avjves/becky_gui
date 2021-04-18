@@ -24,6 +24,28 @@ class Backup(models.Model):
             params[parameter.key] = parameter.value
         return params
 
+    def add_parameter(self, key, value, allow_duplicate=False):
+        """
+        Adds a BackupParameter to the current model.
+        If allow_duplicate is False, any existing parameter with
+        the same key will be overwritten.
+        """
+        if allow_duplicate:
+            param, _ = BackupParameter.objects.get_or_create(backup=self, key=key, value=value)
+        else:
+            params = BackupParameter.objects.filter(backup=self, key=key)
+            params.delete()
+            param = BackupParameter(backup=self, key=key, value=value)
+        param.save()
+
+    def get_parameter(self, key):
+        """
+        Returns a BackupParameter model with the given key that is tied to this Backup.
+        """
+        parameter = self.parameters.get(key=key)
+        return parameter
+
+
 class BackupFile(models.Model):
     path = models.TextField(null=False)
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='files')

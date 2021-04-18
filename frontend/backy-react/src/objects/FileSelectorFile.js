@@ -11,6 +11,7 @@ class FileSelectorFile extends React.Component {
         super(props);
 
         this.toggleFile = this.toggleFile.bind(this);
+        this.checkFile = this.checkFile.bind(this);
     }
 
     getFileIcon(fileType) {
@@ -46,9 +47,20 @@ class FileSelectorFile extends React.Component {
         return color;
     }
 
+    checkFile(event) {
+        var fpath = null;
+        if(this.props.file.directory == '/') {
+           fpath = this.props.file.directory + this.props.file.filename; 
+        }
+        else {
+            fpath = this.props.file.directory + '/' + this.props.file.filename;
+        }
+
+        this.props.addFileSelection(fpath, event.target.checked);
+    }
+
     toggleFile() {
         if(this.props.file.file_type == 'directory') {
-            console.log(this.props.file);
             this.props.toggleFile(this.props.file.directory, this.props.file.filename);
         }
     }
@@ -75,7 +87,7 @@ class FileSelectorFile extends React.Component {
                     <div className="mr-3">
                         <Form>
                             <Form.Group className="d-flex" controlId="formSelected">
-                                <Form.Check type="checkbox"/>
+                                <Form.Check type="checkbox" onClick={this.checkFile}/>
                             </Form.Group>
                         </Form>
                     </div>
