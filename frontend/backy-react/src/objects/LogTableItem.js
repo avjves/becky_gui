@@ -58,7 +58,7 @@ class LogTableItem extends React.Component {
                     </div>
                     <hr />
                 </div>
-                <div className="col-11">
+                <div className="col-11 pb-2">
                     <FieldText field='Message' text={log.message} />
                     <FieldText field='Timestamp' text={log.timestamp} />
                     <FieldText field='Tag' text={log.tag} />
