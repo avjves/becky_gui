@@ -18,7 +18,7 @@ class BackupListView extends React.Component {
                 {this.props.backups.map((backup, index) => {
                     return (
                         <div key={index} className="card m-2">
-                            <BackupListObject backup={backup} />
+                            <BackupListObject backup={backup} deleteBackup={this.props.deleteBackup}/>
                         </div>
                     )
                 })}

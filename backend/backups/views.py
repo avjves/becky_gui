@@ -124,6 +124,13 @@ class BackupView(View):
         return self.user_root
 
 
+class DeleteView(View):
+    """ Simple view to used to delete a backup. """
+
+    def post(self, request, backup_id):
+        backup_model = Backup.objects.get(pk=backup_id)
+        backup_model.delete()
+        return HttpResponse(status=200)
 
 
 class BackupRunnerView(View):

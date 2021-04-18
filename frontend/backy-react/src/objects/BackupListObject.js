@@ -6,6 +6,7 @@ class BackupListObject extends React.Component {
     constructor(props) {
         super(props);
         this.run = this.run.bind(this);
+        this.deleteBackup = this.deleteBackup.bind(this);
     }
 
     run() {
@@ -14,6 +15,11 @@ class BackupListObject extends React.Component {
             credentials: "include",
         });
     }
+
+    deleteBackup() {
+        this.props.deleteBackup(this.props.backup.id);
+    }
+
 
     render() {
         console.log(this.props.backup)
@@ -24,12 +30,12 @@ class BackupListObject extends React.Component {
                         <span>Name: {this.props.backup.name}</span><br />
                     </div>
                     <span>Provider: {this.props.backup.provider}</span><br />
-                    <span>Path: {this.props.backup.path}</span><br />
                 </div>
                 <div className="col-2 mt-1">
                     <Button variant='contained' className="m-1" color='primary' component={Link} to={"/backups/edit/" + this.props.backup.id + "/0"}> Edit </Button>
                     <Button variant='contained' className="m-1" color='primary' onClick={this.run}> run </Button>
                     <Button variant='contained' className="m-1" color='primary' component={Link} to={"/backups/logs/" + this.props.backup.id}>Show logs</Button>
+                    <Button variant='contained' className="m-1" color='primary' onClick={this.deleteBackup}> Delete </Button>
                 </div>
 
             </div>

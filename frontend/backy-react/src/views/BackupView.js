@@ -1,4 +1,5 @@
 import React from "react";
+import axios from 'axios';
 import { Button } from 'react-bootstrap';
 import { Router, Switch, Route, Link, withRouter } from "react-router-dom";
 
@@ -18,6 +19,7 @@ class BackupView extends React.Component {
         }
         this.fetchBackups = this.fetchBackups.bind(this);
         this.addNewBackup = this.addNewBackup.bind(this);
+        this.deleteBackup = this.deleteBackup.bind(this);
     }
 
 
@@ -56,6 +58,19 @@ class BackupView extends React.Component {
     }
 
 
+    deleteBackup(backupId) {
+        axios.post("http://localhost:8000/backups/delete/" + backupId + "/", {
+        })
+        .then((data) => {
+            this.fetchBackups();
+        })
+        .catch((err) => {
+            console.log("ERROR", err);
+        });
+ 
+    }
+
+
     render() {
         if(this.state.visible) {
             return (
@@ -64,7 +79,7 @@ class BackupView extends React.Component {
                         <Switch>
                             <Route path={'/backups/edit/:backupId/:stageId'} component={(props) => <SingleBackupView backupId={props.match.params.backupId} stageId={props.match.params.stageId} addNewBackup={this.addNewBackup}/>} />
                             <Route path={'/backups/list'}>
-                                <BackupListView backups={this.state.backups}/>
+                                <BackupListView backups={this.state.backups} deleteBackup={this.deleteBackup} />
                             </Route>
                             <Route path={'/backups/logs/:backupId'} component={(props) => <SingleBackupLogView backupId={props.match.params.backupId} />} />
                         </Switch>
