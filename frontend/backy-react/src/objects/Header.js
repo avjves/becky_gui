@@ -7,9 +7,21 @@ class Header extends React.Component {
     }
 
     render() {
-        return (
-            <h1>{this.props.text}</h1>
-        );
+        if(this.props.size == 'h1' || !this.props.size) {
+            return (
+                <h1>{this.props.text}</h1>
+            );
+        }
+        else if(this.props.size == 'h2') {
+            return (
+                <h2>{this.props.text}</h2>
+            );
+        }
+        else if(this.props.size == 'h3') {
+            return (
+                <h3>{this.props.text}</h3>
+            );
+        }
     }
 }
 
