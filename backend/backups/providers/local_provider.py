@@ -22,13 +22,12 @@ class LocalBackupProvider(BaseProvider):
         """
         self._log('INFO', 'Started backing up files.')
         list_of_files.sort() # Sort, so folders will be created before any files are copied in.
-        # self.starting_path = parameters['path']
-        starting_path = '/home/avjves/projects'
-        # self.copy_path = parameters['copy_path']
-        copy_path = '/home/avjves/copy_test'
+
+        copy_path = self.parameters['providerSettings']['output_path']
+        self._log('DEBUG', 'Saving files to {}'.format(copy_path))
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
         for file_in_index, file_in in enumerate(list_of_files):
-            file_out = self._generate_output_path(file_in, starting_path, copy_path)
+            file_out = self._generate_output_path(file_in, copy_path)
             self._copy_file(file_in, file_out)
             if file_in_index % 1000 == 0:
                 self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
@@ -49,13 +48,13 @@ class LocalBackupProvider(BaseProvider):
             os.makedirs(folder)
         copyfile(file_in, file_out)
 
-    def _generate_output_path(self, file_in, starting_path, copy_path):
+    def _generate_output_path(self, file_in, copy_path):
         """
         Strips unnecessary suffix from the file_in parameter using the starting path and 
         generates an output path for the file.
         """
-        file_out = file_in[len(starting_path):] #Remove the 'suffix'
-        file_out = '{}{}'.format(copy_path, file_out)
+        file_out =  os.path.join(copy_path, file_in.strip('/'))
+        self._log('DEBUG', 'Output path for {} is {}'.format(file_in, file_out))
         return file_out
 
     def _log(self, level, message):

@@ -1,3 +1,4 @@
+import json
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -26,7 +27,10 @@ class Backup(models.Model):
     def get_provider_parameters(self):
         params = {}
         for parameter in self.parameters.all():
-            params[parameter.key] = parameter.value
+            try:
+                params[parameter.key] = json.loads(parameter.value) # Can be anything, so saved to DB as a JSON string
+            except json.JSONDecodeError:
+                params[parameter.key] = parameter.value
         return params
 
     def add_parameter(self, key, value, allow_duplicate=False):
