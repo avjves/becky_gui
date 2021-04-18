@@ -167,12 +167,24 @@ class FilesView(View):
 
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
-        backup_model, created = Backup.objects.get_or_create(pk=backup_id) # We create a temp backup model if id was not found = new empty backup
+        backup_model = self._get_backup_model(backup_id)
         self._get_user_root(backup_model) # Save backup_id to the model once, so we don't have to pass it around to all functions
         files_path = self._ensure_default_directory_level(path)
         files = os.listdir(files_path)
         file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
         return JsonResponse({'files': file_objects})
+
+    def _get_backup_model(self, backup_id):
+        """
+        Returns a backup model for the current backup ID.
+        If backup_id is -1 ( adding a new Backup model, not yet saved),
+        we create a temporary model that won't be saved.
+        Otherwise, we just fetch actual model.
+        """
+        if backup_id == '-1':
+            return Backup() 
+        else:
+            return Backup.objects.get(pk=backup_id)
 
 
     def _generate_file_object(self, directory, filename, backup_id):
@@ -238,7 +250,7 @@ class FilesView(View):
         Queries for the user root, if it hasn't already been queried.
         Saves the user root to this class, so other funcions can access it as well.
         """
-        if backup_model and backup_model.pk != -1:
+        if backup_model and backup_model.pk:
             self.user_root = backup_model.get_parameter('fs_root').value
         else:
             self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
