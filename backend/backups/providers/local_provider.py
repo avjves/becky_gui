@@ -54,11 +54,23 @@ class LocalProvider(BaseProvider):
             remote_filename = remote_filename.replace(path, '/')
             folder, filename = remote_filename.rsplit('/', 1)
             folder
-            print(remote_filename)
-            if folder == path:
+            if folder:
                 remote_files_to_return.append(filename)
-        self.db_close_connection()
+        self.db.close_connection()
         return remote_files_to_return
+
+    def restore_files(self, selections, restore_path):
+        """
+        Restores selected files from the backups to the restore folder.
+        """
+        self._log('INFO', 'Starting file restore process.') 
+        copy_path = self._get_parameter('output_path')
+        self._log('INFO', '{} files/folders to restore.'.format(len(selections)))
+        for selection in selections.keys():
+            backup_file_path = self._generate_output_path(selection, copy_path)
+            restore_file_path = os.path.join(restore_path, selection.strip('/'))
+            self._copy_file(backup_file_path, restore_file_path)
+        self._log('INFO', '{} files/folders restored.'.format(len(selections)))
 
     def _get_parameter(self, key):
         """

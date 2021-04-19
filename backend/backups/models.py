@@ -96,6 +96,15 @@ class Backup(models.Model):
         backup_files = [bf.path for bf in backup_files]
         return backup_files
 
+    def restore_files(self, selections, restore_path):
+        """
+        Sends the selections and restore path to this backup model's 
+        BackupProvider that will then restore the selected files to
+        the restore_path folder.
+        """
+        provider = self.get_backup_provider()
+        provider.restore_files(selections, restore_path)
+
     def _get_logger(self):
         """
         Returns a logger object that other objects can and will use to log their events.

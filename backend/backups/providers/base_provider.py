@@ -7,11 +7,18 @@ class BaseProvider(ABC):
         """
         Receives a list of files that have to be backed up.
         """
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def get_remote_files(self, path):
         """
         Returns the the names of backed up files at the given path.
         """
-        raise NotImplementedError
+        pass
+
+    @abstractmethod
+    def restore_files(self, selections, restore_path):
+        """
+        Restores selected files from the backups to the restore folder.
+        """
+        pass
