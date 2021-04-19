@@ -3,6 +3,7 @@ import glob
 import shelve
 
 from backups.scanners.base_scanner import BaseScanner
+from logs.models import BackupLogger
 
 """
 Scanner to scan files from the own local system.
@@ -12,9 +13,10 @@ its results.
 
 class LocalFilesScanner(BaseScanner):
     
-        def __init__(self, parameters, logger, backup_model):
+        def __init__(self, parameters, state_database, backup_model):
             self.parameters = parameters
-            self.logger = logger
+            self.logger = BackupLogger(backup_model)
+            self.db = state_database
             self.backup_model = backup_model
             self.tag = 'LocalFilesScanner'
 
@@ -22,23 +24,23 @@ class LocalFilesScanner(BaseScanner):
             """
             Retrieves all found files to be backed up from the database.
             """
-            db = self._open_db_connection()
-            new_files = list(db['new_files'])
-            db.close()
+            self.db.open_connection(self.tag)
+            new_files = list(self.db.get('new_files'))
+            self.db.close_connection()
             return new_files
 
         def mark_new_files(self):
             """
             Marks new files as backed up files.
             """
-            db = self._open_db_connection()
-            backed_up_files = db.get('backed_up_files', [])
-            new_files = db.get('new_files', [])
+            self.db.open_connection(self.tag)
+            backed_up_files = self.db.get('backed_up_files', [])
+            new_files = self.db.get('new_files', [])
             backed_up_files = backed_up_files + new_files
-            db['backed_up_files'] = backed_up_files
-            db['new_files'] = []
+            self.db.save('backed_up_files', backed_up_files)
+            self.db.save('new_files', [])
             self._log('INFO', 'Marked {} files as backed up. Now {} files in total.'.format(len(new_files), len(backed_up_files)))
-            db.close()
+            self.db.close_connection()
 
 
         def scan_files(self, backup_files):
@@ -51,13 +53,10 @@ class LocalFilesScanner(BaseScanner):
             scanned_files = []
             for file_path in backup_files:
                 self._log('DEBUG', 'Scanning for files from selected path {}'.format(file_path))
-            # starting_path = '/home/avjves/projects'
-                scanned_files += self._scan_local_files(file_path)
+            scanned_files += self._scan_local_files(file_path)
             self._log('INFO', 'Finished file scanning.')
-            db = self._open_db_connection()
             self._log('INFO', 'Starting file comparisions.')
-            self._compare_scanned_files(scanned_files, db)
-            db.close()
+            self._compare_scanned_files(scanned_files)
 
 
         def _open_db_connection(self):
@@ -85,17 +84,19 @@ class LocalFilesScanner(BaseScanner):
                 scanned_files = glob.glob(starting_path + "/**/*", recursive=True)
             return scanned_files
 
-        def _compare_scanned_files(self, scanned_files, db):
+        def _compare_scanned_files(self, scanned_files):
             """
             Compares the scanned files with the files from the database.
             For now, only checks whether there are any files that are NOT
             present in the database. Any changes to previously backed up files
             would therefore not be backed up, ever.
             """
-            files = db.get('backed_up_files', [])
+            self.db.open_connection(self.tag)
+            files = self.db.get('backed_up_files', [])
             new_files = list(set(scanned_files).difference(set(files)))
-            db['new_files'] = new_files
+            self.db.save('new_files', new_files)
             self._log('INFO', 'Found {} new files.'.format(len(new_files)))
+            self.db.close_connection()
 
         def _log(self, level, message):
             """

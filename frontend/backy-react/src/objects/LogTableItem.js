@@ -51,7 +51,7 @@ class LogTableItem extends React.Component {
         console.log('log', logIcon);
         var itemValues = [['Tag:', log.tag], ['Timestamp:', log.timestamp], ['Message:', log.message]];
         return (
-            <div className="border" style={{'background-color': backgroundColor}}>
+            <div className="border" style={{'backgroundColor': backgroundColor}}>
                 <div className="col">
                     <div className="pt-3 pl-4">
                         {logIcon} 

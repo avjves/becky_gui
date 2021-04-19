@@ -1,10 +1,10 @@
 from django.db import models
-from backups.models import Backup
+
 from backy.utils import format_timestamp_gui
 
 
 class LogRow(models.Model):
-    backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='log_rows')
+    backup = models.ForeignKey('backups.Backup', on_delete=models.CASCADE, related_name='log_rows')
     level = models.CharField(max_length=32, null=False)
     tag = models.CharField(max_length=32, null=False)
     message = models.CharField(max_length=512, null=False)

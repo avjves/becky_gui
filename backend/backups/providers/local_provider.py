@@ -1,17 +1,20 @@
 import os
+import shelve
 from shutil import copyfile
 from backups.providers.base_provider import BaseProvider
+from logs.models import BackupLogger
 
 """
 A local backup provider that can backup files from one location
 to another, within a local system.
 """
-class LocalBackupProvider(BaseProvider):
+class LocalProvider(BaseProvider):
     
-    def __init__(self, parameters, logger, backup_model):
+    def __init__(self, parameters, state_database, backup_model):
         self.parameters = parameters
-        self.logger = logger
         self.backup_model = backup_model
+        self.db = state_database
+        self.logger = BackupLogger(backup_model)
         self.tag = 'LocalBackupProvider'
 
     def backup_files(self, list_of_files):
@@ -23,15 +26,46 @@ class LocalBackupProvider(BaseProvider):
         self._log('INFO', 'Started backing up files.')
         list_of_files.sort() # Sort, so folders will be created before any files are copied in.
 
-        copy_path = self.parameters['providerSettings']['output_path']
+        copy_path = self._get_parameter('output_path')
         self._log('DEBUG', 'Saving files to {}'.format(copy_path))
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
+        self.db.open_connection(self.tag)
+        remote_filenames = self.db.get('remote_filenames', [])
         for file_in_index, file_in in enumerate(list_of_files):
             file_out = self._generate_output_path(file_in, copy_path)
             self._copy_file(file_in, file_out)
+            remote_filenames.append(file_in)
             if file_in_index % 1000 == 0:
                 self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
         self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))
+        self.db.save('remote_filenames', remote_filenames)
+        self.db.close_connection()
+
+    def get_remote_files(self, path):
+        """
+        Returns the the names of backed up files at the given path.
+        """
+        print(path)
+        self.db.open_connection(self.tag)
+        remote_filenames = self.db.get('remote_filenames', [])
+        ##TODO MAKE THIS BETTER
+        remote_files_to_return = []
+        for remote_filename in remote_filenames:
+            remote_filename = remote_filename.replace(path, '/')
+            folder, filename = remote_filename.rsplit('/', 1)
+            folder
+            print(remote_filename)
+            if folder == path:
+                remote_files_to_return.append(filename)
+        self.db_close_connection()
+        return remote_files_to_return
+
+    def _get_parameter(self, key):
+        """
+        Returns the parameter with the given key from the backup parameters.
+        """
+        return self.parameters['providerSettings'][key]
+    
 
     def _copy_file(self, file_in, file_out):
         """

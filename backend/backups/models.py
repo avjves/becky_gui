@@ -2,6 +2,10 @@ import json
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
 
+import backups.providers as providers
+import backups.scanners as scanners
+import backups.databases as databases
+from logs.models import BackupLogger
 
 class Backup(models.Model):
     name = models.CharField(max_length=128, null=False)
@@ -22,7 +26,26 @@ class Backup(models.Model):
         return json_output
 
     def get_backup_provider(self):
-        return self.provider
+        """
+        Checks the desired backup provider from the model and intializes a proper 
+        backup provider model.
+        """
+        provider = providers.get_provider(self.provider, self)
+        return provider
+
+    def get_file_scanner(self):
+        """
+        Checks the desired file scanner from the model and intializes it.
+        """
+        scanner = scanners.get_scanner('local', self)
+        return scanner
+
+    def get_state_database(self):
+        """
+        Returns a database that reflects the internal state of this backup model.
+        """
+        state_database = databases.get_database('shelve', self)
+        return state_database
 
     def get_provider_parameters(self):
         params = {}
@@ -72,6 +95,14 @@ class Backup(models.Model):
         backup_files = self.files.all()
         backup_files = [bf.path for bf in backup_files]
         return backup_files
+
+    def _get_logger(self):
+        """
+        Returns a logger object that other objects can and will use to log their events.
+        TODO: For now, just using the default logger. At someone allow using different loggers as well?
+        """
+        logger = BackupLogger(self)
+        return logger
 
 
 class BackupFile(models.Model):

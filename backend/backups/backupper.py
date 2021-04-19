@@ -38,21 +38,13 @@ class Backupper:
         Checks the desired backup provider from the model and intializes a proper 
         backup provider model.
         """
-        backup_provider = self.backup_model.get_backup_provider()
-        parameters = self.backup_model.get_provider_parameters()
-        if backup_provider == 'local':
-            provider = providers.local_provider.LocalBackupProvider(parameters, self.logger, self.backup_model)
-        else:
-            raise providers.exceptions.ProviderNotSupportedException(backup_provider)
-        return provider
+        return self.backup_model.get_backup_provider()
 
     def _get_file_scanner(self):
         """
         Returns a scanner object that will be used to scan new / changed files on the system.
         """
-        parameters = self.backup_model.get_provider_parameters()
-        scanner = scanners.local_scanner.LocalFilesScanner(parameters, self.logger, self.backup_model)
-        return scanner
+        return self.backup_model.get_file_scanner()
 
     def _get_files_to_scan(self):
         """

@@ -5,6 +5,7 @@ import { Router, Switch, Route, Link, withRouter } from "react-router-dom";
 
 import SingleBackupView from './SingleBackupView.js';
 import SingleBackupLogView from './SingleBackupLogView.js';
+import SingleBackupRestoreView from './SingleBackupRestoreView.js';
 import BackupListView from './BackupListView.js';
 
 import history from '../history.js';
@@ -82,6 +83,7 @@ class BackupView extends React.Component {
                                 <BackupListView backups={this.state.backups} deleteBackup={this.deleteBackup} />
                             </Route>
                             <Route path={'/backups/logs/:backupId'} component={(props) => <SingleBackupLogView backupId={props.match.params.backupId} />} />
+                            <Route path={'/backups/restore/:backupId'} component={(props) => <SingleBackupRestoreView backupId={props.match.params.backupId} />} />
                         </Switch>
                     </Router>
                 </React.Fragment>

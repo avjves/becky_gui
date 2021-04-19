@@ -255,3 +255,16 @@ class FilesView(View):
         else:
             self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
         return self.user_root
+
+class RestoreFilesView(FilesView):
+
+    def get(self, request, backup_id, **kwargs):
+        path = request.GET.get('path')
+        backup_model = self._get_backup_model(backup_id)
+        self._get_user_root(backup_model) # Save backup_id to the model once, so we don't have to pass it around to all functions
+        files_path = self._ensure_default_directory_level(path)
+        provider = backup_model.get_backup_provider()
+        files = provider.get_remote_files(files_path)
+        print(files)
+        file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
+        return JsonResponse({'files': file_objects})

@@ -9,4 +9,5 @@ urlpatterns = [
         path('delete/<str:backup_id>/', views.DeleteView.as_view()),
         path('logs/<str:backup_id>/', views.LogsView.as_view()),
         path('files/<str:backup_id>/', views.FilesView.as_view()),
+        path('restore/files/<str:backup_id>/', views.RestoreFilesView.as_view()),
 ]
