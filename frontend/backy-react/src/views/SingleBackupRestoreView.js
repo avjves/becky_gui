@@ -60,6 +60,7 @@ class SingleBackupRestoreView extends React.Component {
         })
         .then((data) => {
             console.log(data)
+            history.push('/backups/list');
         })
     }
 

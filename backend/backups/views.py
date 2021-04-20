@@ -60,7 +60,7 @@ class BackupView(View):
         turn off (i.e. delete a BackupFile model) a backup. 
         """
         for selection_path, selection_state in backup_data['selections'].items():
-            absolute_selection_path = join_file_path(self._get_user_root(backup_model), selection_path)
+            absolute_selection_path = join_file_path(backup_model.get_user_root(), selection_path)
             if selection_state == True:
                 bf, created = BackupFile.objects.get_or_create(backup=backup_model, path=absolute_selection_path, relative_path=selection_path)
                 bf.save()
@@ -112,16 +112,17 @@ class BackupView(View):
         backup_model.save()
         return HttpResponse(status=200)
 
-    def _get_user_root(self, backup_model=None):
+    def _get_user_root(self, backup_model):
         """
         Queries for the user root, if it hasn't already been queried.
         Saves the user root to this class, so other funcions can access it as well.
         """
-        if backup_model and backup_model.pk:
-            self.user_root = backup_model.get_parameter('fs_root').value
-        else:
-            self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
-        return self.user_root
+        return backup_model.get_user_root()
+        # if backup_model and backup_model.pk:
+            # self.user_root = backup_model.get_parameter('fs_root').value
+        # else:
+            # self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
+        # return self.user_root
 
 
 class DeleteView(View):
@@ -168,8 +169,8 @@ class FilesView(View):
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
         backup_model = self._get_backup_model(backup_id)
-        self._get_user_root(backup_model) # Save backup_id to the model once, so we don't have to pass it around to all functions
-        files_path = self._ensure_default_directory_level(path)
+        #self._get_user_root(backup_model) # Save backup_id to the model once, so we don't have to pass it around to all functions
+        files_path = self._ensure_default_directory_level(path, backup_model)
         files = os.listdir(files_path)
         file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
         return JsonResponse({'files': file_objects})
@@ -187,15 +188,15 @@ class FilesView(View):
             return Backup.objects.get(pk=backup_id)
 
 
-    def _generate_file_object(self, directory, filename, backup_id):
+    def _generate_file_object(self, directory, filename, backup_model):
         """
         Given a path, creates a file object.
         TODO: Check if said file is selected for backups.
         """
         level = self._calculate_directory_level(join_file_path(directory, filename))
         obj = {'filename': filename, 'selected': False, 'directory': directory, 'level': level}
-        obj['selected'] = self._check_file_selection(directory, filename, backup_id)
-        if self._path_is_directory(directory, filename):
+        obj['selected'] = self._check_file_selection(directory, filename, backup_model)
+        if self._path_is_directory(directory, filename, backup_model):
             obj['file_type'] = 'directory'
             obj['files'] = []
         else:
@@ -218,38 +219,39 @@ class FilesView(View):
         Checks whether the given file/folder in the given directory has been saved
         for backing up.
         """
-        path = join_file_path(self._get_user_root(), directory, filename)
+        path = join_file_path(backup_model.get_user_root(), directory, filename)
         backup_file = backup_model.get_backup_file(path)
         if backup_file:
             return True
         else:
             return False
 
-    def _ensure_default_directory_level(self, path):
+    def _ensure_default_directory_level(self, path, backup_model):
         """
         Ensures that the default path set by the user is
         at the beginning of the path.
         """
-        user_root = self._get_user_root()
+        user_root = backup_model.get_user_root()
         if not path.startswith(user_root):
             path = os.path.join(user_root, path.strip("/"))
         return path
 
-    def _path_is_directory(self, directory, filename):
+    def _path_is_directory(self, directory, filename, backup_model):
         """
         Checks whether the given file in in the given directory
         is a directory. Adds the user defined root to the front.
         """
-        if os.path.isdir(join_file_path(self._get_user_root(), directory, filename)):
+        if os.path.isdir(join_file_path(backup_model.get_user_root(), directory, filename)):
             return True
         else:
             return False
 
-    def _get_user_root(self, backup_model=None):
+    def _get_user_root(self, backup_model):
         """
         Queries for the user root, if it hasn't already been queried.
         Saves the user root to this class, so other funcions can access it as well.
         """
+        return backup_model.get_user_root()
         if backup_model and backup_model.pk:
             self.user_root = backup_model.get_parameter('fs_root').value
         else:
@@ -274,3 +276,11 @@ class RestoreFilesView(FilesView):
         backup_model = self._get_backup_model(backup_id)
         backup_model.restore_files(selections, restore_path)
         return HttpResponse(status=200)
+
+
+    def _check_file_selection(self, directory, filename, backup_model):
+        """
+        Nothing should ever be checked by default during the restore process, so always return False here.
+        """
+        return False
+

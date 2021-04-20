@@ -3,6 +3,7 @@ import shelve
 from shutil import copyfile
 from backups.providers.base_provider import BaseProvider
 from logs.models import BackupLogger
+from backy.utils import remove_prefix
 
 """
 A local backup provider that can backup files from one location
@@ -54,7 +55,6 @@ class LocalProvider(BaseProvider):
             folder, filename = remote_filename.rsplit('/', 1)
             folder = '/' if not folder else folder
             if folder == path:
-                print(path, remote_file, folder, filename)
                 remote_files_to_return.append(filename)
         self.db.close_connection()
         return remote_files_to_return
@@ -66,10 +66,10 @@ class LocalProvider(BaseProvider):
         self._log('INFO', 'Starting file restore process.') 
         copy_path = self._get_parameter('output_path')
         self._log('INFO', '{} files/folders to restore.'.format(len(selections)))
-        for selection in selections.keys():
+        for selection in selections:
             backup_file_path = self._generate_output_path(selection, copy_path)
-            restore_file_path = os.path.join(restore_path, selection.strip('/'))
-            self._copy_file(backup_file_path, restore_file_path)
+            restore_file_path = {'path': os.path.join(restore_path, remove_prefix(selection['relative_path'], '/')), 'relative_path': selection['relative_path']}
+            self._copy_file(backup_file_path, restore_file_path, create_folders=True)
         self._log('INFO', '{} files/folders restored.'.format(len(selections)))
 
     def _get_parameter(self, key):
@@ -79,20 +79,22 @@ class LocalProvider(BaseProvider):
         return self.parameters['providerSettings'][key]
     
 
-    def _copy_file(self, file_in, file_out):
+    def _copy_file(self, file_in, file_out, create_folders=False):
         """
         Receives a single file that should be copied to the copy folder.
         First checks that a proper folder exists before attempting a copy.
+        If create_folders is true, creates all folders in the path.
         """
-        if os.path.exists(file_out):
+        if os.path.exists(file_out['path']):
             return
         if os.path.isdir(file_in['path']):
-            os.makedirs(file_out)
+            os.makedirs(file_out['path'])
             return
-        # folder = file_out.rsplit("/", 1)[0]
-        # if not os.path.exists(folder):
-            # os.makedirs(folder)
-        copyfile(file_in['path'], file_out)
+        if create_folders:
+            folder = file_out['path'].rsplit("/", 1)[0]
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+        copyfile(file_in['path'], file_out['path'])
 
     def _generate_output_path(self, file_in, copy_path):
         """
@@ -100,7 +102,7 @@ class LocalProvider(BaseProvider):
         """
         file_out =  os.path.join(copy_path, file_in['relative_path'].strip('/'))
         self._log('DEBUG', 'Output path for {} is {}'.format(file_in['relative_path'], file_out))
-        return file_out
+        return {'path': file_out, 'relative_path': file_in['relative_path']}
 
     def _log(self, level, message):
         """

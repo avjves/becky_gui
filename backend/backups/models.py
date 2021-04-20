@@ -1,11 +1,14 @@
 import json
+import os
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
 
 import backups.providers as providers
 import backups.scanners as scanners
 import backups.databases as databases
+from settings.models import GlobalParameter
 from logs.models import BackupLogger
+from backy.utils import remove_prefix
 
 class Backup(models.Model):
     name = models.CharField(max_length=128, null=False)
@@ -77,6 +80,16 @@ class Backup(models.Model):
         parameter = self.parameters.get(key=key)
         return parameter
 
+    def get_user_root(self):
+        """
+        Returns the user defined root for this backup model.
+        If none has been set yet, returns the global default value.
+        """
+        try:
+            return self.get_parameter('fs_root').value
+        except ObjectDoesNotExist:
+            return GlobalParameter.get_global_parameter('fs_root')
+
     def get_backup_file(self, path):
         """
         Checks whether the backup contains a file with the given path.
@@ -101,6 +114,7 @@ class Backup(models.Model):
         BackupProvider that will then restore the selected files to
         the restore_path folder.
         """
+        selections = self._expand_selections(selections)
         provider = self.get_backup_provider()
         provider.restore_files(selections, restore_path)
 
@@ -111,6 +125,18 @@ class Backup(models.Model):
         """
         logger = BackupLogger(self)
         return logger
+
+    def _expand_selections(self, selections):
+        """
+        Expands a list of relative paths into the BackupFile JSON format with proper paths.
+        """
+        expanded_selections = []
+        user_root = self.get_user_root()
+        for selection in selections:
+            expanded = {'path': os.path.join(user_root, remove_prefix(selection, '/')), 'relative_path': selection}
+            expanded_selections.append(expanded)
+        return expanded_selections
+
 
 
 class BackupFile(models.Model):
