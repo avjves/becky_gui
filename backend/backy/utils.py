@@ -16,3 +16,12 @@ def join_file_path(*args):
         args[i] = args[i].strip('/')
     return os.path.join(*args)
 
+def remove_prefix(string, prefix):
+    """
+    Removes a prefix from the string, if it exists.
+    """
+    # print("Attempting to remove prefix {} from string {}".format(prefix, string))
+    if string.startswith(prefix):
+        return string[len(prefix):]
+    else:
+        return string[:]

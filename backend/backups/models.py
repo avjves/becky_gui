@@ -93,7 +93,6 @@ class Backup(models.Model):
         Returns all backup file paths tied to this model as a list.
         """
         backup_files = self.files.all()
-        backup_files = [bf.path for bf in backup_files]
         return backup_files
 
     def restore_files(self, selections, restore_path):
@@ -116,7 +115,20 @@ class Backup(models.Model):
 
 class BackupFile(models.Model):
     path = models.TextField(null=False)
+    relative_path = models.TextField(null=False)
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='files')
+
+    def get_root(self):
+        """
+        Returns the root of the path that we don't want to backup.
+        I.e, the difference between path and relative_path.
+        TODO: FIX
+        """
+        return self.path[:-len(self.relative_path)]
+
+    def to_json(self):
+        return {'path': self.path, 'relative_path': self.relative_path}
+        
 
 
 class BackupParameter(models.Model):

@@ -4,6 +4,7 @@ import shelve
 
 from backups.scanners.base_scanner import BaseScanner
 from logs.models import BackupLogger
+from backy.utils import remove_prefix
 
 """
 Scanner to scan files from the own local system.
@@ -51,9 +52,9 @@ class LocalFilesScanner(BaseScanner):
             """
             self._log('INFO', 'Started file scanning.')
             scanned_files = []
-            for file_path in backup_files:
-                self._log('DEBUG', 'Scanning for files from selected path {}'.format(file_path))
-            scanned_files += self._scan_local_files(file_path)
+            for backup_file in backup_files:
+                self._log('DEBUG', 'Scanning for files from selected path {}'.format(backup_file.path))
+                scanned_files += self._scan_local_files(backup_file)
             self._log('INFO', 'Finished file scanning.')
             self._log('INFO', 'Starting file comparisions.')
             self._compare_scanned_files(scanned_files)
@@ -73,15 +74,18 @@ class LocalFilesScanner(BaseScanner):
             return db
 
 
-        def _scan_local_files(self, starting_path):
+        def _scan_local_files(self, backup_file):
             """
             Uses glob to recursively find all files from the starting_path.
             TODO: What if the the glob output becomes massive?
             """
-            if os.path.isfile(starting_path): # Starting_path is not a folder, but a file
-                scanned_files = [starting_path]
+            if os.path.isfile(backup_file.path): # Starting_path is not a folder, but a file
+                scanned_files = [backup_file.to_json()]
             else:
-                scanned_files = glob.glob(starting_path + "/**/*", recursive=True)
+                root = backup_file.get_root()
+                scanned_files = glob.glob(backup_file.path + "/**/*", recursive=True)
+                scanned_files.insert(0, backup_file.path)
+                scanned_files = [{'path': f, 'relative_path': remove_prefix(f, root)} for f in scanned_files]
             return scanned_files
 
         def _compare_scanned_files(self, scanned_files):
@@ -93,7 +97,8 @@ class LocalFilesScanner(BaseScanner):
             """
             self.db.open_connection(self.tag)
             files = self.db.get('backed_up_files', [])
-            new_files = list(set(scanned_files).difference(set(files)))
+            backed_up_paths = set([f['relative_path'] for f in files])
+            new_files = [new_file for new_file in scanned_files if new_file['relative_path'] not in backed_up_paths]
             self.db.save('new_files', new_files)
             self._log('INFO', 'Found {} new files.'.format(len(new_files)))
             self.db.close_connection()

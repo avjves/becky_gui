@@ -24,37 +24,37 @@ class LocalProvider(BaseProvider):
         going through files one at a time.
         """
         self._log('INFO', 'Started backing up files.')
-        list_of_files.sort() # Sort, so folders will be created before any files are copied in.
+        list_of_files.sort(key=lambda x: x['path']) # Sort, so folders will be created before any files are copied in.
 
         copy_path = self._get_parameter('output_path')
         self._log('DEBUG', 'Saving files to {}'.format(copy_path))
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
         self.db.open_connection(self.tag)
-        remote_filenames = self.db.get('remote_filenames', [])
+        remote_files = self.db.get('remote_files', [])
         for file_in_index, file_in in enumerate(list_of_files):
             file_out = self._generate_output_path(file_in, copy_path)
             self._copy_file(file_in, file_out)
-            remote_filenames.append(file_in)
+            remote_files.append(file_in)
             if file_in_index % 1000 == 0:
                 self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
         self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))
-        self.db.save('remote_filenames', remote_filenames)
+        self.db.save('remote_files', remote_files)
         self.db.close_connection()
 
     def get_remote_files(self, path):
         """
         Returns the the names of backed up files at the given path.
         """
-        print(path)
         self.db.open_connection(self.tag)
-        remote_filenames = self.db.get('remote_filenames', [])
+        remote_files = self.db.get('remote_files', [])
         ##TODO MAKE THIS BETTER
         remote_files_to_return = []
-        for remote_filename in remote_filenames:
-            remote_filename = remote_filename.replace(path, '/')
+        for remote_file in remote_files:
+            remote_filename = remote_file['relative_path']
             folder, filename = remote_filename.rsplit('/', 1)
-            folder
-            if folder:
+            folder = '/' if not folder else folder
+            if folder == path:
+                print(path, remote_file, folder, filename)
                 remote_files_to_return.append(filename)
         self.db.close_connection()
         return remote_files_to_return
@@ -86,21 +86,20 @@ class LocalProvider(BaseProvider):
         """
         if os.path.exists(file_out):
             return
-        if os.path.isdir(file_in):
+        if os.path.isdir(file_in['path']):
             os.makedirs(file_out)
             return
-        folder = file_out.rsplit("/", 1)[0]
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        copyfile(file_in, file_out)
+        # folder = file_out.rsplit("/", 1)[0]
+        # if not os.path.exists(folder):
+            # os.makedirs(folder)
+        copyfile(file_in['path'], file_out)
 
     def _generate_output_path(self, file_in, copy_path):
         """
-        Strips unnecessary suffix from the file_in parameter using the starting path and 
-        generates an output path for the file.
+        Generates an output path by concatenating copy_path and file_in.
         """
-        file_out =  os.path.join(copy_path, file_in.strip('/'))
-        self._log('DEBUG', 'Output path for {} is {}'.format(file_in, file_out))
+        file_out =  os.path.join(copy_path, file_in['relative_path'].strip('/'))
+        self._log('DEBUG', 'Output path for {} is {}'.format(file_in['relative_path'], file_out))
         return file_out
 
     def _log(self, level, message):

@@ -29,6 +29,7 @@ class BackupLogger:
         """
         self._check_level_validity(level)
         self._add_log_row(message, tag, level)
+        self._print_log(message, tag, level)
 
     def _add_log_row(self, message, tag, level):
         """
@@ -49,7 +50,12 @@ class BackupLogger:
         if level not in allowed_levels:
             raise InvalidLogLevelException(level)
 
-
+    def _print_log(self, message, tag, level):
+        """
+        Debug function to print all logs to terminal
+        """
+        if False:
+            print('{} - {}: {}'.format(tag, level, message))
 
     
 

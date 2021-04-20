@@ -60,13 +60,13 @@ class BackupView(View):
         turn off (i.e. delete a BackupFile model) a backup. 
         """
         for selection_path, selection_state in backup_data['selections'].items():
-            selection_path = join_file_path(self._get_user_root(backup_model), selection_path)
+            absolute_selection_path = join_file_path(self._get_user_root(backup_model), selection_path)
             if selection_state == True:
-                bf, created = BackupFile.objects.get_or_create(backup=backup_model, path=selection_path)
+                bf, created = BackupFile.objects.get_or_create(backup=backup_model, path=absolute_selection_path, relative_path=selection_path)
                 bf.save()
             else:
                 try:
-                    bf = BackupFile.objects.get(backup=backup_model, path=selection_path)
+                    bf = BackupFile.objects.get(backup=backup_model, path=absolute_selection_path)
                     bf.delete()
                 except ObjectDoesNotExist:
                     pass
@@ -262,10 +262,8 @@ class RestoreFilesView(FilesView):
         path = request.GET.get('path')
         backup_model = self._get_backup_model(backup_id)
         self._get_user_root(backup_model) # Save backup_id to the model once, so we don't have to pass it around to all functions
-        files_path = self._ensure_default_directory_level(path)
         provider = backup_model.get_backup_provider()
-        files = provider.get_remote_files(files_path)
-        print(files)
+        files = provider.get_remote_files(path)
         file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
         return JsonResponse({'files': file_objects})
 
