@@ -280,6 +280,7 @@ class RestoreFilesView(FilesView):
     def post(self, request, backup_id, **kwargs):
         data = json.loads(request.body)
         selections = data['selections']
+        selections = list(selections.keys())
         restore_path = data['restore_path']
         backup_model = self._get_backup_model(backup_id)
         backup_model.restore_files(selections, restore_path)

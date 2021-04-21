@@ -25,7 +25,7 @@ class LocalProvider(BaseProvider):
         going through files one at a time.
         """
         self._log('INFO', 'Started backing up files.')
-        list_of_files.sort(key=lambda x: x['path']) # Sort, so folders will be created before any files are copied in.
+        list_of_files.sort(key=lambda x: x.path) # Sort, so folders will be created before any files are copied in.
 
         copy_path = self._get_parameter('output_path')
         self._log('DEBUG', 'Saving files to {}'.format(copy_path))
@@ -51,7 +51,7 @@ class LocalProvider(BaseProvider):
         ##TODO MAKE THIS BETTER
         remote_files_to_return = set()
         for remote_file in remote_files:
-            remote_filename = remote_file['relative_path']
+            remote_filename = remote_file.relative_path
             path = path if path.endswith('/') else path + '/' 
             remote_filename = remove_prefix(remote_filename, path)
             filename = remote_filename.split('/', 1)[0]
@@ -68,9 +68,10 @@ class LocalProvider(BaseProvider):
         copy_path = self._get_parameter('output_path')
         self._log('INFO', '{} files/folders to restore.'.format(len(selections)))
         for selection in selections:
-            backup_file_path = self._generate_output_path(selection, copy_path)
-            restore_file_path = {'path': os.path.join(restore_path, remove_prefix(selection['relative_path'], '/')), 'relative_path': selection['relative_path']}
-            self._copy_file(backup_file_path, restore_file_path, create_folders=True)
+            restored_file = self._generate_output_path(selection, copy_path)
+            backup_file = self.backup_model.create_backup_file_instance(selection.relative_path, 'relative')
+            backup_file.path = os.path.join(restore_path, remove_prefix(backup_file.relative_path, '/'))
+            self._copy_file(restored_file, backup_file, create_folders=True)
         self._log('INFO', '{} files/folders restored.'.format(len(selections)))
 
     def _get_parameter(self, key):
@@ -86,24 +87,24 @@ class LocalProvider(BaseProvider):
         First checks that a proper folder exists before attempting a copy.
         If create_folders is true, creates all folders in the path.
         """
-        if os.path.exists(file_out['path']):
+        if os.path.exists(file_out.path):
             return
-        if os.path.isdir(file_in['path']):
-            os.makedirs(file_out['path'])
+        if os.path.isdir(file_in.path):
+            os.makedirs(file_out.path)
             return
         if create_folders:
-            folder = file_out['path'].rsplit("/", 1)[0]
+            folder = file_out.path.rsplit("/", 1)[0]
             if not os.path.exists(folder):
                 os.makedirs(folder)
-        copyfile(file_in['path'], file_out['path'])
+        copyfile(file_in.path, file_out.path)
 
     def _generate_output_path(self, file_in, copy_path):
         """
         Generates an output path by concatenating copy_path and file_in.
         """
-        file_out =  os.path.join(copy_path, file_in['relative_path'].strip('/'))
-        self._log('DEBUG', 'Output path for {} is {}'.format(file_in['relative_path'], file_out))
-        return {'path': file_out, 'relative_path': file_in['relative_path']}
+        file_out =  os.path.join(copy_path, file_in.relative_path.strip('/'))
+        self._log('DEBUG', 'Output path for {} is {}'.format(file_in.relative_path, file_out))
+        return self.backup_model.create_backup_file_instance((file_out, file_in.relative_path), None)
 
     def _log(self, level, message):
         """

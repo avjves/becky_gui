@@ -84,8 +84,8 @@ class LocalFilesScanner(BaseScanner):
             else:
                 root = backup_file.get_root()
                 scanned_files = glob.glob(backup_file.path + "/**/*", recursive=True)
-                scanned_files.insert(0, backup_file.path)
-                scanned_files = [{'path': f, 'relative_path': remove_prefix(f, root)} for f in scanned_files]
+                scanned_files = self.backup_model.create_backup_file_instances(scanned_files, 'absolute')
+                scanned_files.insert(0, backup_file)
             return scanned_files
 
         def _compare_scanned_files(self, scanned_files):
@@ -97,8 +97,8 @@ class LocalFilesScanner(BaseScanner):
             """
             self.db.open_connection(self.tag)
             files = self.db.get('backed_up_files', [])
-            backed_up_paths = set([f['relative_path'] for f in files])
-            new_files = [new_file for new_file in scanned_files if new_file['relative_path'] not in backed_up_paths]
+            backed_up_paths = set([f.relative_path for f in files])
+            new_files = [new_file for new_file in scanned_files if new_file.relative_path not in backed_up_paths]
             self.db.save('new_files', new_files)
             self._log('INFO', 'Found {} new files.'.format(len(new_files)))
             self.db.close_connection()

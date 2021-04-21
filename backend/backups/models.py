@@ -28,6 +28,32 @@ class Backup(models.Model):
 
         return json_output
 
+
+    def create_backup_file_instance(self, fpath, path_type):
+        """
+        Given a file path, creates BackupFiles from it.
+        Adds both absolute and relative paths to the object.
+        The given path_type variable specifies which type of path was 
+        fed into this function.
+        """
+        backup_file = None
+        if path_type == 'absolute':
+            backup_file = BackupFile(backup=self, path=fpath, relative_path='')
+        elif path_type == 'relative':
+            backup_file = BackupFile(backup=self, path='', relative_path=fpath)
+        elif not path_type:
+            backup_file = BackupFile(backup=self, path=fpath[0], relative_path=fpath[1])
+        backup_file.generate_missing_paths()
+        return backup_file
+
+    def create_backup_file_instances(self, files, path_type):
+        """
+        Calls 'create_backup_file_instances' for each file given in
+        and returns the values as a list.
+        """
+        backup_files = [self.create_backup_file_instance(f, path_type) for f in files]
+        return backup_files
+
     def get_backup_provider(self):
         """
         Checks the desired backup provider from the model and intializes a proper 
@@ -114,7 +140,7 @@ class Backup(models.Model):
         BackupProvider that will then restore the selected files to
         the restore_path folder.
         """
-        selections = self._expand_selections(selections)
+        selections = self.create_backup_file_instances(selections, 'relative')
         provider = self.get_backup_provider()
         provider.restore_files(selections, restore_path)
 
@@ -126,18 +152,7 @@ class Backup(models.Model):
         logger = BackupLogger(self)
         return logger
 
-    def _expand_selections(self, selections):
-        """
-        Expands a list of relative paths into the BackupFile JSON format with proper paths.
-        """
-        expanded_selections = []
-        user_root = self.get_user_root()
-        for selection in selections:
-            expanded = {'path': os.path.join(user_root, remove_prefix(selection, '/')), 'relative_path': selection}
-            expanded_selections.append(expanded)
-        return expanded_selections
-
-
+    
 
 class BackupFile(models.Model):
     path = models.TextField(null=False)
@@ -151,6 +166,19 @@ class BackupFile(models.Model):
         TODO: FIX
         """
         return self.path[:-len(self.relative_path)]
+
+    def generate_missing_paths(self):
+        """
+        Generates either a msising path or a missing relative path using the other path.
+        One path MUST be defined.
+        """
+        if self.path and self.relative_path: return
+        if self.path:
+            self.relative_path = self.path[len(self.backup.get_user_root()):]
+        elif self.relative_path:
+            self.path = self.backup.get_user_root() + self.relative_path
+        else:
+            raise NotImplementedError
 
     def to_json(self):
         return {'path': self.path, 'relative_path': self.relative_path}
