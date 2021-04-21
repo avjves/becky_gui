@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.views.generic.base import View
 
 from backups.models import Backup, BackupFile
@@ -152,9 +153,14 @@ class LogsView(View):
     def get(self, request, backup_id, **kwargs):
         current_page = int(request.GET.get('current_page'))
         rows_per_page = int(request.GET.get('rows_per_page'))
+        levels_to_show = json.loads(request.GET.get('levels_to_show'))
+        levels_to_show = [key.upper() for key, value in levels_to_show.items() if value == True]
 
         backup_model = Backup.objects.get(pk=backup_id)
-        logs = backup_model.log_rows.all().order_by('-timestamp')
+        q = Q()
+        for level_to_show in levels_to_show:
+            q.add(Q(level=level_to_show), Q.OR)
+        logs = backup_model.log_rows.filter(q).order_by('-timestamp')
 
         start_index = current_page*rows_per_page
         end_index = (current_page+1)*rows_per_page
