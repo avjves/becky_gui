@@ -155,17 +155,19 @@ class LogsView(View):
         rows_per_page = int(request.GET.get('rows_per_page'))
         levels_to_show = json.loads(request.GET.get('levels_to_show'))
         levels_to_show = [key.upper() for key, value in levels_to_show.items() if value == True]
+        if levels_to_show:
+            backup_model = Backup.objects.get(pk=backup_id)
+            q = Q()
+            for level_to_show in levels_to_show:
+                q.add(Q(level=level_to_show), Q.OR)
+            logs = backup_model.log_rows.filter(q).order_by('-timestamp')
 
-        backup_model = Backup.objects.get(pk=backup_id)
-        q = Q()
-        for level_to_show in levels_to_show:
-            q.add(Q(level=level_to_show), Q.OR)
-        logs = backup_model.log_rows.filter(q).order_by('-timestamp')
-
-        start_index = current_page*rows_per_page
-        end_index = (current_page+1)*rows_per_page
-        sliced_logs = logs[start_index:end_index]
-        json_logs = [log.to_json() for log in sliced_logs]
+            start_index = current_page*rows_per_page
+            end_index = (current_page+1)*rows_per_page
+            sliced_logs = logs[start_index:end_index]
+            json_logs = [log.to_json() for log in sliced_logs]
+        else:
+            json_logs = []
         return JsonResponse({'logs': json_logs})
 
 
