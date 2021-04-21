@@ -49,15 +49,16 @@ class LocalProvider(BaseProvider):
         self.db.open_connection(self.tag)
         remote_files = self.db.get('remote_files', [])
         ##TODO MAKE THIS BETTER
-        remote_files_to_return = []
+        remote_files_to_return = set()
         for remote_file in remote_files:
             remote_filename = remote_file['relative_path']
-            folder, filename = remote_filename.rsplit('/', 1)
-            folder = '/' if not folder else folder
-            if folder == path:
-                remote_files_to_return.append(filename)
+            path = path if path.endswith('/') else path + '/' 
+            remote_filename = remove_prefix(remote_filename, path)
+            filename = remote_filename.split('/', 1)[0]
+            if filename:
+                remote_files_to_return.add(filename)
         self.db.close_connection()
-        return remote_files_to_return
+        return list(remote_files_to_return)
 
     def restore_files(self, selections, restore_path):
         """
