@@ -25,12 +25,15 @@ class Backupper:
         On subsequent runs it just scans for new/changed files and scans those.
         """
         print("Starting file scanning...")
+        self.backup_model.set_status('Scanning for files...')
         files_to_scan = self._get_files_to_scan()
         self.scanner.scan_files(files_to_scan)
         print("Starting file backing...")
+        self.backup_model.set_status('Backing up files...')
         self.backup_provider.backup_files(self.scanner.get_changed_files())
         print("Starting file marking...")
         self.scanner.mark_new_files()
+        self.backup_model.set_status('Idle')
         return True
 
     def _get_backup_provider(self):

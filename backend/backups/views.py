@@ -141,7 +141,11 @@ class BackupRunnerView(View):
     def get(self, request, backup_id):
         backup_model = Backup.objects.get(pk=backup_id)
         backupper =  Backupper(backup_model)
-        backupper.backup()
+        try:
+            backupper.backup()
+        except Exception as e:
+            backup_model.set_status('Idle due to an error')
+            raise e
         return HttpResponse(status=200)
 
 

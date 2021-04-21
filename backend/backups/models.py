@@ -14,9 +14,10 @@ class Backup(models.Model):
     name = models.CharField(max_length=128, null=False)
     provider = models.CharField(max_length=128, null=False)
     running = models.BooleanField(default=False)
+    status = models.CharField(max_length=128, default='idle')
 
     def to_simple_json(self):
-        return {'id': self.id, 'name': self.name, 'provider': self.provider, 'running': self.running}
+        return {'id': self.id, 'name': self.name, 'provider': self.provider, 'running': self.running, 'status': self.status}
 
     def to_detailed_json(self):
         json_output = self.to_simple_json()
@@ -143,6 +144,13 @@ class Backup(models.Model):
         selections = self.create_backup_file_instances(selections, 'relative')
         provider = self.get_backup_provider()
         provider.restore_files(selections, restore_path)
+
+    def set_status(self, status):
+        """
+        Sets the current status of the backup model to the given status.
+        """
+        self.status = status
+        self.save()
 
     def _get_logger(self):
         """
