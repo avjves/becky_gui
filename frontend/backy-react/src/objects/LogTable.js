@@ -8,6 +8,11 @@ class LogTable extends React.Component {
         return (
             <div>
                 <div>
+                    <Button variant='contained' className="m-1" color='primary' onClick={this.props.previousPage}> Previous page</Button>
+                    <Button variant='contained' className="m-1" color='primary' onClick={this.props.nextPage}> Next page </Button>
+                </div>
+                <hr />
+                <div>
                     {this.props.logs.map((log, index) => {
                         return (
                             <div key={index}>
@@ -18,10 +23,6 @@ class LogTable extends React.Component {
                             </div>
                         )
                     })}
-                </div>
-                <div>
-                    <Button variant='contained' className="m-1" color='primary' onClick={this.props.previousPage}> Previous page</Button>
-                    <Button variant='contained' className="m-1" color='primary' onClick={this.props.nextPage}> Next page </Button>
                 </div>
             </div>
         )

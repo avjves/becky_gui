@@ -27,7 +27,10 @@ class FileSelectorFile extends React.Component {
 
     getStatusIcon(fileType, open) {
         var icon = null;
-        if(fileType == 'file' || open != true) {
+        if(fileType == 'file') {
+            icon = <div style={{'width': '12px'}}/>;
+        }
+        else if(open != true) {
             icon = <FontAwesomeIcon icon={faChevronRight} />
         }
         else {

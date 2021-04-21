@@ -61,7 +61,7 @@ class SingleBackupLogView extends React.Component {
         var checked = event.target.checked; 
         var currentLevels = this.state.levelsToShow;
         currentLevels[level] = checked;
-        this.setState({levelsToShow: currentLevels}, this.fetchLogs);
+        this.setState({currentPage: 0, levelsToShow: currentLevels}, this.fetchLogs);
     }
 
 
