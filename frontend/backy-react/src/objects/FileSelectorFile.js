@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form } from 'react-bootstrap';
+import { FormGroup, FormControlLabel, Checkbox } from '@material-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFolder, faFile, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
@@ -50,6 +50,20 @@ class FileSelectorFile extends React.Component {
         return color;
     }
 
+    getCheckbox(file, implicitSelection) {
+        var checkbox = null;
+        if(file.selected == true) {
+            checkbox = <FormControlLabel control={<Checkbox color="secondary" size="small" checked={true} onChange={this.checkFile} />}  />
+        }
+        else if(implicitSelection) {
+            checkbox = <FormControlLabel control={<Checkbox color="primary" size="small" checked={true} onChange={this.checkFile} indeterminate/>} />
+        }
+        else {
+            checkbox = <FormControlLabel control={<Checkbox size="small" checked={false} onChange={this.checkFile} />} />
+        }
+        return checkbox;
+    }
+
     checkFile(event) {
         var fpath = null;
         if(this.props.file.directory == '/') {
@@ -68,35 +82,34 @@ class FileSelectorFile extends React.Component {
         }
     }
 
+
     render() {
         var leftMargin = 25*this.props.level;
         var fileIcon = this.getFileIcon(this.props.fileType);
         var statusIcon = this.getStatusIcon(this.props.fileType, this.props.file.open);
         var backgroundColor = this.getBackgroundColor(this.props.file.file_type);
-
+        var checkbox = this.getCheckbox(this.props.file, this.props.implicitSelection);
         return (
             <div className="">
-                <div style={{'backgroundColor': backgroundColor, 'marginLeft': leftMargin}} className="row pt-2 shadow">
+                <div style={{'backgroundColor': backgroundColor, 'marginLeft': leftMargin}} className="row shadow">
 
-                    <div className="pl-1 mr-3" onClick={this.toggleFile}>
+                    <div className="pl-1 pt-2 mr-3" onClick={this.toggleFile}>
                         {statusIcon}
                     </div>
 
-                    <div className="mr-3">
+                    <div className="mr-3 pt-2">
                         {fileIcon}
                     </div>
 
 
                     <div className="mr-3">
-                        <Form>
-                            <Form.Group className="d-flex" controlId="formSelected">
-                                <Form.Check type="checkbox" onClick={this.checkFile} defaultChecked={this.props.file.selected}/>
-                            </Form.Group>
-                        </Form>
+                        <FormGroup>
+                            {checkbox}
+                        </FormGroup>
                     </div>
 
                     
-                    <div>
+                    <div className="pt-2">
                         <span>{this.props.filename}</span>
                     </div>
                 </div>

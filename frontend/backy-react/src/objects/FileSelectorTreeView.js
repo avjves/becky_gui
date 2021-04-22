@@ -13,6 +13,7 @@ class FileSelectorTreeView extends React.Component {
         this.updateFileTree = this.updateFileTree.bind(this);
         this.toggleFile = this.toggleFile.bind(this);
         this.getDirectoryFilesAsHTML = this.getDirectoryFilesAsHTML.bind(this);
+        this.addFileSelection = this.addFileSelection.bind(this);
     }
 
     componentDidMount() {
@@ -41,6 +42,15 @@ class FileSelectorTreeView extends React.Component {
         return fileTree;
     }
 
+    addFileSelection(path, checked) {
+        console.log(path);
+        var currentFileTree = this.state.fileTree;
+        var selectedFile = this.getFile(currentFileTree, path);    
+        selectedFile.selected = !selectedFile.selected;
+        this.setState({fileTree: currentFileTree});
+        this.props.addFileSelection(path, checked);
+    }
+
     getFileDirectory(fileTree, directory) {
         var folders = directory.split("/");
         var cur = fileTree;
@@ -50,6 +60,10 @@ class FileSelectorTreeView extends React.Component {
             }
         }
         return cur;
+    }
+
+    getFile(fileTree, filePath) {
+        return this.getFileDirectory(fileTree, filePath);
     }
 
     makeDirPath(directory, file) {
@@ -75,23 +89,47 @@ class FileSelectorTreeView extends React.Component {
         }
     }
 
-    getDirectoryFilesAsHTML(directory) {
+    getImplicitFolders(directory) {
+        var folders = [];
+        for(var file in directory.files) {
+            console.log("Going through", file)
+            var fileData = directory.files[file];
+            if(fileData.selected) {
+                folders.push(fileData.directory);
+            }
+            if(fileData.file_type == 'directory') {
+                var new_folders = this.getImplicitFolders(fileData);
+                folders = folders.concat(new_folders);
+            }
+        }
+        return folders;
+    }
+
+    getDirectoryFilesAsHTML(directory, implicitSelection) {
         var files = [];
         for(var file in directory.files) {
             var fileData = directory.files[file];
-            if(fileData.file_type == 'directory') {
-                files.push(this.getDirectoryFilesAsHTML(fileData));
+            var propagateImplicitSelection = null;
+            if(directory.selected || implicitSelection) {
+                propagateImplicitSelection = true;
             }
             else {
-                files.push(<FileSelectorFile file={fileData} path={fileData.path} addFileSelection={this.props.addFileSelection} fileType="file" filename={fileData.filename} selectFile={this.selectFile} level={directory.level+1}/>);
+                propagateImplicitSelection = false;
+            }
+            if(fileData.file_type == 'directory') {
+                files.push(this.getDirectoryFilesAsHTML(fileData, propagateImplicitSelection));
+            }
+            else {
+                files.push(<FileSelectorFile file={fileData} implicitSelection={propagateImplicitSelection} path={fileData.path} addFileSelection={this.addFileSelection} fileType="file" filename={fileData.filename} selectFile={this.selectFile} level={directory.level+1}/>);
             }
         }
-        return <FileSelectorFolder file={directory} toggleFile={this.toggleFile} addFileSelection={this.props.addFileSelection} fileType="directory" filename={directory.filename} files={files} status={directory.status} level={directory.level}/>
+        return <FileSelectorFolder file={directory} toggleFile={this.toggleFile} implicitSelection={implicitSelection} addFileSelection={this.addFileSelection} fileType="directory" filename={directory.filename} files={files} status={directory.status} level={directory.level}/>
 
     }
 
     render() {
-        var treeElements = this.getDirectoryFilesAsHTML(this.state.fileTree);
+        //var implicitFolders = this.getImplicitFolders(this.state.fileTree);
+        var treeElements = this.getDirectoryFilesAsHTML(this.state.fileTree, false);
         return (
             <div style={{'height': '200px', 'height': '500px', 'overflowX': 'auto', 'whiteSpace': 'nowrap'}} className="m-2 p-1 border">
                 {treeElements} 
