@@ -24,20 +24,22 @@ class BackupListObject extends React.Component {
     render() {
         console.log(this.props.backup)
         return (
-            <div className="row">
-                <div className="col-10 mt-auto mb-auto">
+            <div className="row m-1 p-2 shadow rounded">
+                <div className="col-11 mt-auto mb-auto">
                     <div>
                         <span>Name: {this.props.backup.name}</span><br />
                     </div>
                     <span>Provider: {this.props.backup.provider}</span><br />
                     <span>Status: {this.props.backup.status}</span><br />
                 </div>
-                <div className="col-2 mt-1">
-                    <Button variant='contained' className="m-1" color='primary' component={Link} to={"/backups/edit/" + this.props.backup.id + "/0"}> Edit </Button>
-                    <Button variant='contained' className="m-1" color='primary' onClick={this.run}> run </Button>
-                    <Button variant='contained' className="m-1" color='primary' component={Link} to={"/backups/logs/" + this.props.backup.id}>Show logs</Button>
-                    <Button variant='contained' className="m-1" color='primary' component={Link} to={"/backups/restore/" + this.props.backup.id}>Restore</Button>
-                    <Button variant='contained' className="m-1" color='primary' onClick={this.deleteBackup}> Delete </Button>
+                <div className="col-1 pl-1">
+                    <div className="">
+                        <Button variant='contained' className="m-1" size="small" style={{"width": "100px"}} color='primary' component={Link} to={"/backups/edit/" + this.props.backup.id + "/0"}> Edit </Button>
+                        <Button variant='contained' className="m-1" size="small" style={{"width": "100px"}} color='primary' onClick={this.run}> run </Button>
+                        <Button variant='contained' className="m-1" size="small" style={{"width": "100px"}} color='primary' component={Link} to={"/backups/logs/" + this.props.backup.id}>logs</Button>
+                        <Button variant='contained' className="m-1" size="small" style={{"width": "100px"}} color='primary' component={Link} to={"/backups/restore/" + this.props.backup.id}>Restore</Button>
+                        <Button variant='contained' className="m-1" size="small" style={{"width": "100px"}} color='primary' onClick={this.deleteBackup}> Delete </Button>
+                    </div>
                 </div>
 
             </div>
