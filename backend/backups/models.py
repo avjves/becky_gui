@@ -8,7 +8,7 @@ import backups.scanners as scanners
 import backups.databases as databases
 from settings.models import GlobalParameter
 from logs.models import BackupLogger
-from backy.utils import remove_prefix
+from becky.utils import remove_prefix
 
 class Backup(models.Model):
     name = models.CharField(max_length=128, null=False)

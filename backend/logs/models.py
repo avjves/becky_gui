@@ -1,6 +1,6 @@
 from django.db import models
 
-from backy.utils import format_timestamp_gui
+from becky.utils import format_timestamp_gui
 
 
 class LogRow(models.Model):

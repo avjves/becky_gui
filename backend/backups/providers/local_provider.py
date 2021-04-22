@@ -4,7 +4,7 @@ import shelve
 from shutil import copyfile
 from backups.providers.base_provider import BaseProvider
 from logs.models import BackupLogger
-from backy.utils import remove_prefix
+from becky.utils import remove_prefix
 
 """
 A local backup provider that can backup files from one location

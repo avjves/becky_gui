@@ -10,7 +10,7 @@ from django.views.generic.base import View
 
 from backups.models import Backup, BackupFile
 from backups.backupper import Backupper
-from backy.utils import join_file_path
+from becky.utils import join_file_path
 from settings.models import GlobalParameter
 from logs.models import BackupLogger
 

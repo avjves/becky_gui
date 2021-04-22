@@ -4,7 +4,7 @@ import shelve
 
 from backups.scanners.base_scanner import BaseScanner
 from logs.models import BackupLogger
-from backy.utils import remove_prefix
+from becky.utils import remove_prefix
 
 """
 Scanner to scan files from the own local system.
