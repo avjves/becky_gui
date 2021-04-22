@@ -1,4 +1,5 @@
 import os
+import glob
 import shelve
 from shutil import copyfile
 from backups.providers.base_provider import BaseProvider
@@ -66,13 +67,19 @@ class LocalProvider(BaseProvider):
         """
         self._log('INFO', 'Starting file restore process.') 
         copy_path = self._get_parameter('output_path')
-        self._log('INFO', '{} files/folders to restore.'.format(len(selections)))
+        files_to_restore = []
         for selection in selections:
-            restored_file = self._generate_output_path(selection, copy_path)
+            selection_files = [selection.path] + glob.glob(selection.path + "/**/*", recursive=True)
+            files_to_restore += selection_files
+        self._log('INFO', '{} files/folders to restore.'.format(len(files_to_restore)))
+
+        for selection_file in files_to_restore:
+            selection_file = self.backup_model.create_backup_file_instance(selection_file, 'absolute')
+            restored_file = self._generate_output_path(selection_file, restore_path)
             backup_file = self.backup_model.create_backup_file_instance(selection.relative_path, 'relative')
             backup_file.path = os.path.join(restore_path, remove_prefix(backup_file.relative_path, '/'))
-            self._copy_file(restored_file, backup_file, create_folders=True)
-        self._log('INFO', '{} files/folders restored.'.format(len(selections)))
+            self._copy_file(backup_file, restored_file, create_folders=True)
+        self._log('INFO', '{} files/folders restored.'.format(len(files_to_restore)))
 
     def _get_parameter(self, key):
         """
