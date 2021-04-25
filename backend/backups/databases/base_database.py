@@ -21,3 +21,7 @@ class BaseDatabase(ABC):
     @abstractmethod
     def save(self, key, value):
         pass
+
+    @abstractmethod
+    def clear(self):
+        pass

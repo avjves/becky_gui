@@ -73,3 +73,17 @@ class ShelveDatabase(BaseDatabase):
             self.db[self.state_name] = state_data
         except Exception as e:
             raise exceptions.DatabaseInteractionException(key=key, message='Could not save data with the given key.', exception=e)
+
+
+    def clear(self):
+        """
+        Completely clears the state data from the current database.
+        """
+        if not hasattr(self, 'db'):
+            raise exceptions.DatabaseNotOpenedException
+
+        try:
+            self.db[self.state_name] = {}
+        except Exception as e:
+            raise exceptions.DatabaseInteractionException(key=key, message='Could not save data with the given key.', exception=e)
+
