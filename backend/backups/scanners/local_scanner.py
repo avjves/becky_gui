@@ -4,7 +4,7 @@ import shelve
 
 from backups.scanners.base_scanner import BaseScanner
 from logs.models import BackupLogger
-from becky.utils import remove_prefix
+from becky.utils import remove_prefix, path_to_folders
 
 """
 Scanner to scan files from the own local system.
@@ -82,10 +82,10 @@ class LocalFilesScanner(BaseScanner):
             if os.path.isfile(backup_file.path): # Starting_path is not a folder, but a file
                 scanned_files = [backup_file.to_json()]
             else:
-                root = backup_file.get_root()
                 scanned_files = glob.glob(backup_file.path + "/**/*", recursive=True)
                 scanned_files = self.backup_model.create_backup_file_instances(scanned_files, 'absolute')
-                scanned_files.insert(0, backup_file)
+                implicit_folders = path_to_folders(backup_file.relative_path)
+                scanned_files += self.backup_model.create_backup_file_instances(implicit_folders, 'relative')
             return scanned_files
 
         def _compare_scanned_files(self, scanned_files):

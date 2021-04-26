@@ -61,19 +61,12 @@ class BackupView(View):
         turn off (i.e. delete a BackupFile model) a backup. 
         """
         for selection_path, selection_state in backup_data['selections'].items():
-            absolute_selection_path = join_file_path(backup_model.get_user_root(), selection_path)
-            if selection_state == True:
-                bf, created = BackupFile.objects.get_or_create(backup=backup_model, path=absolute_selection_path, relative_path=selection_path)
-                bf.save()
+            if selection_state:
+                backup_model.add_backup_file(selection_path)
             else:
-                try:
-                    bf = BackupFile.objects.get(backup=backup_model, path=absolute_selection_path)
-                    bf.delete()
-                except ObjectDoesNotExist:
-                    pass
+                backup_model.delete_backup_file(selection_path)
         del backup_data['selections']
 
-                
 
     def _add_provider_specific_values(self, backup_model, backup_data):
         """

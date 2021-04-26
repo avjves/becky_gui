@@ -1,4 +1,6 @@
 import os
+import uuid
+import random
 
 def format_timestamp_gui(timestamp):
     """
@@ -25,3 +27,30 @@ def remove_prefix(string, prefix):
         return string[len(prefix):]
     else:
         return string[:]
+
+def create_test_files(path, file_count):
+    """
+    Generates new random empty files/folders to the given path.
+    File_count specifies how many files/folders will be generated
+    in total.
+    """
+    random_files = [str(uuid.uuid4()) for i in range(0, file_count)]
+    cur_f = path
+    for random_file in random_files:
+        is_dir = random.randint(0, 5)
+        if is_dir:
+            cur_f = os.path.join(cur_f, random_file)
+            os.mkdir(cur_f)
+        else:
+            open(os.path.join(cur_f, random_file), 'w').write(random_file)
+
+
+def path_to_folders(path):
+    """
+    Given a path to folder, returns a list of paths of each folder in the original path.
+    """
+    folders = []
+    while path:
+        folders.append(path)
+        path = path.rsplit('/', 1)[0]
+    return folders

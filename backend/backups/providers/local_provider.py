@@ -77,7 +77,7 @@ class LocalProvider(BaseProvider):
             selection_file = self.backup_model.create_backup_file_instance(selection_file, 'absolute')
             restored_file = self._generate_output_path(selection_file, restore_path)
             backup_file = self.backup_model.create_backup_file_instance(selection.relative_path, 'relative')
-            backup_file.path = os.path.join(restore_path, remove_prefix(backup_file.relative_path, '/'))
+            backup_file.path = os.path.join(copy_path, remove_prefix(backup_file.relative_path, '/'))
             self._copy_file(backup_file, restored_file, create_folders=True)
         self._log('INFO', '{} files/folders restored.'.format(len(files_to_restore)))
 

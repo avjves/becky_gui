@@ -36,6 +36,8 @@ class Backup(models.Model):
         Adds both absolute and relative paths to the object.
         The given path_type variable specifies which type of path was 
         fed into this function.
+        This is a helper function for scanners/providers, so that they can easily
+        generate new BackupFile objects at any point. 
         """
         backup_file = None
         if path_type == 'absolute':
@@ -104,19 +106,13 @@ class Backup(models.Model):
         """
         Returns a BackupParameter model with the given key that is tied to this Backup.
         """
-        parameter = self.parameters.get(key=key)
+        try:
+            parameter = self.parameters.get(key=key)
+        except ObjectDoesNotExist:
+            parameter = GlobalParameter.get_global_parameter('fs_root')
         return parameter
 
-    def get_user_root(self):
-        """
-        Returns the user defined root for this backup model.
-        If none has been set yet, returns the global default value.
-        """
-        try:
-            return self.get_parameter('fs_root').value
-        except ObjectDoesNotExist:
-            return GlobalParameter.get_global_parameter('fs_root')
-
+    
     def get_backup_file(self, path):
         """
         Checks whether the backup contains a file with the given path.
@@ -127,6 +123,27 @@ class Backup(models.Model):
             return backup_file
         except ObjectDoesNotExist:
             return None
+
+    def add_backup_file(self, relative_path):
+        """
+        Creates a BackupFile from the given relative path.
+        If an BackupFile tied to this model already exists
+        with the given path, nothing is changed.
+        """
+        backup_file, _ = self.files.get_or_create(backup=self, relative_path=relative_path)
+        backup_file.generate_missing_paths()
+        backup_file.save()
+
+    def delete_backup_file(self, relative_path):
+        """
+        Attempts to delete a backup file with the given relative path.
+        If none such exists, we just return.
+        """
+        try:
+            bf = self.files.objects.get(relative_path=relative_path)
+            bf.delete()
+        except ObjectDoesNotExist:
+            pass
 
     def get_all_backup_files(self):
         """
@@ -144,6 +161,24 @@ class Backup(models.Model):
         selections = self.create_backup_file_instances(selections, 'relative')
         provider = self.get_backup_provider()
         provider.restore_files(selections, restore_path)
+
+    def run_backup(self):
+        """
+        Starts the backup process. If this is the first time running it,
+        it first generates the database and then backups everything.
+        On subsequent runs it just scans for new/changed files and backups those.
+        """
+        scanner = self.get_file_scanner()
+        provider = self.get_backup_provider()
+        print("Starting file scanning...")
+        self.set_status('Scanning for files...')
+        scanner.scan_files(self.get_all_backup_files())
+        print("Starting file backing...")
+        self.set_status('Backing up files...')
+        provider.backup_files(scanner.get_changed_files())
+        print("Starting file marking...")
+        scanner.mark_new_files()
+        self.set_status('Idle')
 
     def set_status(self, status):
         """
@@ -180,11 +215,12 @@ class BackupFile(models.Model):
         Generates either a msising path or a missing relative path using the other path.
         One path MUST be defined.
         """
+        fs_root = self.backup.get_parameter('fs_root').value.rstrip('/')
         if self.path and self.relative_path: return
         if self.path:
-            self.relative_path = self.path[len(self.backup.get_user_root()):]
+            self.relative_path = self.path[len(fs_root):]
         elif self.relative_path:
-            self.path = self.backup.get_user_root() + self.relative_path
+            self.path = fs_root + self.relative_path
         else:
             raise NotImplementedError
 

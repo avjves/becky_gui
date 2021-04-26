@@ -6,15 +6,15 @@ from tempfile import TemporaryDirectory
 
 from django.test import TestCase
 from backups.models import Backup
+from becky.utils import path_to_folders
 
 
 class LocalScannerTests(TestCase):
     def setUp(self):
-        self.backup_model = Backup(name='', provider='', running=0, status='')
+        self.backup_model = Backup(name='_test_backup', provider='', running=0, status='')
         self.backup_model.save()
         self.backup_model.add_parameter('fs_root', '/')
         self.scanner = self.backup_model.get_file_scanner()
-        self.scanner.tag = self.scanner.tag + '_Test'
         self.database = self.backup_model.get_state_database()
         self.database.open_connection(self.scanner.tag)
         self.database.clear()
@@ -49,7 +49,7 @@ class LocalScannerTests(TestCase):
         Asserts that these files are the same as the new files the LocalScanner finds.
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
-        all_files.insert(0, self.test_directory.name)
+        all_files += path_to_folders(self.test_directory.name)
         initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
         self.scanner.scan_files([initial_backup_file])
         files = self.scanner.get_changed_files()
@@ -62,7 +62,7 @@ class LocalScannerTests(TestCase):
         that a second file scanning finds the newly added files.
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
-        all_files.insert(0, self.test_directory.name)
+        all_files += path_to_folders(self.test_directory.name)
         initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
         self.scanner.scan_files([initial_backup_file])
         self._create_test_files()
@@ -80,7 +80,7 @@ class LocalScannerTests(TestCase):
         after marking initial files.
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
-        all_files.insert(0, self.test_directory.name)
+        all_files += path_to_folders(self.test_directory.name)
         initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
         self.scanner.scan_files([initial_backup_file])
         self.scanner.mark_new_files()
@@ -98,7 +98,7 @@ class LocalScannerTests(TestCase):
         after marking new files.
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
-        all_files.insert(0, self.test_directory.name)
+        all_files += path_to_folders(self.test_directory.name)
         initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
         self.scanner.scan_files([initial_backup_file])
         self.scanner.mark_new_files()
@@ -121,7 +121,7 @@ class LocalScannerTests(TestCase):
         A second scan should not find anything new - delete is not a observed change.
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
-        all_files.insert(0, self.test_directory.name)
+        all_files += path_to_folders(self.test_directory.name)
         all_files.sort(key=len, reverse=True)
         initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
         self.scanner.scan_files([initial_backup_file])
