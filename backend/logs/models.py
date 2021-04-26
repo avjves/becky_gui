@@ -54,7 +54,8 @@ class BackupLogger:
         """
         Debug function to print all logs to terminal
         """
-        print('{} - {}: {}'.format(tag, level, message))
+        return
+        # print('{} - {}: {}'.format(tag, level, message))
 
     
 

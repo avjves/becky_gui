@@ -50,12 +50,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_crontab',
     'corsheaders',
     'becky',
     'api',
     'backups',
     'settings',
     'logs',
+]
+
+CRONJOBS = [
+        ('* * * * *', 'backups.cron.run_periodic_backups'),
 ]
 
 MIDDLEWARE = [
