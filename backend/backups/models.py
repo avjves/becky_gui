@@ -30,31 +30,21 @@ class Backup(models.Model):
         return json_output
 
 
-    def create_backup_file_instance(self, fpath, path_type):
+    def create_backup_file_instance(self, path):
         """
         Given a file path, creates BackupFiles from it.
-        Adds both absolute and relative paths to the object.
-        The given path_type variable specifies which type of path was 
-        fed into this function.
         This is a helper function for scanners/providers, so that they can easily
         generate new BackupFile objects at any point. 
         """
-        backup_file = None
-        if path_type == 'absolute':
-            backup_file = BackupFile(backup=self, path=fpath, relative_path='')
-        elif path_type == 'relative':
-            backup_file = BackupFile(backup=self, path='', relative_path=fpath)
-        elif not path_type:
-            backup_file = BackupFile(backup=self, path=fpath[0], relative_path=fpath[1])
-        backup_file.generate_missing_paths()
+        backup_file = BackupFile(backup=self, path=path)
         return backup_file
 
-    def create_backup_file_instances(self, files, path_type):
+    def create_backup_file_instances(self, files):
         """
         Calls 'create_backup_file_instances' for each file given in
         and returns the values as a list.
         """
-        backup_files = [self.create_backup_file_instance(f, path_type) for f in files]
+        backup_files = [self.create_backup_file_instance(f) for f in files]
         return backup_files
 
     def get_backup_provider(self):
@@ -109,7 +99,7 @@ class Backup(models.Model):
         try:
             parameter = self.parameters.get(key=key)
         except ObjectDoesNotExist:
-            parameter = GlobalParameter.get_global_parameter('fs_root')
+            parameter = GlobalParameter.get_global_parameter(key)
         return parameter
 
     
@@ -124,23 +114,22 @@ class Backup(models.Model):
         except ObjectDoesNotExist:
             return None
 
-    def add_backup_file(self, relative_path):
+    def add_backup_file(self, path):
         """
-        Creates a BackupFile from the given relative path.
+        Creates a BackupFile from the given path.
         If an BackupFile tied to this model already exists
         with the given path, nothing is changed.
         """
-        backup_file, _ = self.files.get_or_create(backup=self, relative_path=relative_path)
-        backup_file.generate_missing_paths()
+        backup_file, _ = self.files.get_or_create(backup=self, path=path)
         backup_file.save()
 
-    def delete_backup_file(self, relative_path):
+    def delete_backup_file(self, path):
         """
-        Attempts to delete a backup file with the given relative path.
+        Attempts to delete a backup file with the given path.
         If none such exists, we just return.
         """
         try:
-            bf = self.files.objects.get(relative_path=relative_path)
+            bf = self.files.objects.get(path=path)
             bf.delete()
         except ObjectDoesNotExist:
             pass
@@ -158,7 +147,7 @@ class Backup(models.Model):
         BackupProvider that will then restore the selected files to
         the restore_path folder.
         """
-        selections = self.create_backup_file_instances(selections, 'relative')
+        selections = self.create_backup_file_instances(selections)
         provider = self.get_backup_provider()
         provider.restore_files(selections, restore_path)
 
@@ -200,35 +189,11 @@ class Backup(models.Model):
 
 class BackupFile(models.Model):
     path = models.TextField(null=False)
-    relative_path = models.TextField(null=False)
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='files')
 
-    def get_root(self):
-        """
-        Returns the root of the path that we don't want to backup.
-        I.e, the difference between path and relative_path.
-        TODO: FIX
-        """
-        return self.path[:-len(self.relative_path)]
-
-    def generate_missing_paths(self):
-        """
-        Generates either a msising path or a missing relative path using the other path.
-        One path MUST be defined.
-        """
-        fs_root = self.backup.get_parameter('fs_root').value.rstrip('/')
-        if self.path and self.relative_path: return
-        if self.path:
-            self.relative_path = self.path[len(fs_root):]
-        elif self.relative_path:
-            self.path = fs_root + self.relative_path
-        else:
-            raise NotImplementedError
-
     def to_json(self):
-        return {'path': self.path, 'relative_path': self.relative_path}
+        return {'path': self.path}
         
-
 
 class BackupParameter(models.Model):
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='parameters')

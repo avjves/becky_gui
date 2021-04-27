@@ -50,7 +50,7 @@ class LocalScannerTests(TestCase):
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
         all_files += path_to_folders(self.test_directory.name)
-        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
+        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name)
         self.scanner.scan_files([initial_backup_file])
         files = self.scanner.get_changed_files()
         paths = [f.path for f in files]
@@ -63,7 +63,7 @@ class LocalScannerTests(TestCase):
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
         all_files += path_to_folders(self.test_directory.name)
-        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
+        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name)
         self.scanner.scan_files([initial_backup_file])
         self._create_test_files()
         new_all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
@@ -81,7 +81,7 @@ class LocalScannerTests(TestCase):
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
         all_files += path_to_folders(self.test_directory.name)
-        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
+        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name)
         self.scanner.scan_files([initial_backup_file])
         self.scanner.mark_new_files()
         self.database.open_connection(self.scanner.tag)
@@ -99,7 +99,7 @@ class LocalScannerTests(TestCase):
         """
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
         all_files += path_to_folders(self.test_directory.name)
-        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
+        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name)
         self.scanner.scan_files([initial_backup_file])
         self.scanner.mark_new_files()
         self._create_test_files()
@@ -123,7 +123,7 @@ class LocalScannerTests(TestCase):
         all_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
         all_files += path_to_folders(self.test_directory.name)
         all_files.sort(key=len, reverse=True)
-        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name, 'absolute')
+        initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name)
         self.scanner.scan_files([initial_backup_file])
         self.scanner.mark_new_files()
         for i in range(0, 10):

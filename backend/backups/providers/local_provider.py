@@ -52,7 +52,7 @@ class LocalProvider(BaseProvider):
         ##TODO MAKE THIS BETTER
         remote_files_to_return = set()
         for remote_file in remote_files:
-            remote_filename = remote_file.relative_path
+            remote_filename = remote_file.path
             path = path if path.endswith('/') else path + '/' 
             remote_filename = remove_prefix(remote_filename, path)
             filename = remote_filename.split('/', 1)[0]
@@ -109,9 +109,9 @@ class LocalProvider(BaseProvider):
         """
         Generates an output path by concatenating copy_path and file_in.
         """
-        file_out =  os.path.join(copy_path, file_in.relative_path.strip('/'))
-        self._log('DEBUG', 'Output path for {} is {}'.format(file_in.relative_path, file_out))
-        return self.backup_model.create_backup_file_instance((file_out, file_in.relative_path), None)
+        file_out =  join_file_path(copy_path, file_in.path)
+        # self._log('DEBUG', 'Output path for {} is {}'.format(file_in.path, file_out))
+        return self.backup_model.create_backup_file_instance(file_out)
 
     def _log(self, level, message):
         """

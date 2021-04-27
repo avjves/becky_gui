@@ -102,9 +102,9 @@ class LocalProviderTests(TestCase):
     def test_get_remote_files_at_path(self):
         """
         Test that the get_remote_files function returns the proper files
-        given a relative path.
-        E.g. /projects should return all backed up files that are on that
-        relative folder.
+        given a path.
+        E.g. /home/projects should return all backed up files that are on that
+        folder.
         """
         self.backup_model.run_backup()
         files_at_root = os.listdir(self.backup_directory.name + '/')
@@ -126,9 +126,7 @@ class LocalProviderTests(TestCase):
         backed_up_files = glob.glob(self.test_directory.name + '/**/*', recursive=True)
         files = [f for f in backed_up_files if not os.path.isdir(f)]
         selected_files = files[0:5]
-        backup_files = self.backup_model.create_backup_file_instances(selected_files, 'absolute')
-        relative_files = [f.relative_path for f in backup_files]
-        self.backup_model.restore_files(relative_files, self.restore_directory.name)
+        self.backup_model.restore_files(selected_files, self.restore_directory.name)
         restored_files = glob.glob(self.restore_directory.name + '/**/*', recursive=True)
         for f in selected_files:
             file_name = f.split('/')[-1]

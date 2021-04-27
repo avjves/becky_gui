@@ -106,18 +106,6 @@ class BackupView(View):
         backup_model.save()
         return HttpResponse(status=200)
 
-    def _get_user_root(self, backup_model):
-        """
-        Queries for the user root, if it hasn't already been queried.
-        Saves the user root to this class, so other funcions can access it as well.
-        """
-        return backup_model.get_user_root()
-        # if backup_model and backup_model.pk:
-            # self.user_root = backup_model.get_parameter('fs_root').value
-        # else:
-            # self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
-        # return self.user_root
-
 
 class DeleteView(View):
     """ Simple view to used to delete a backup. """
@@ -174,9 +162,7 @@ class FilesView(View):
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
         backup_model = self._get_backup_model(backup_id)
-        #self._get_user_root(backup_model) # Save backup_id to the model once, so we don't have to pass it around to all functions
-        files_path = self._ensure_default_directory_level(path, backup_model)
-        files = os.listdir(files_path)
+        files = os.listdir(path)
         file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
         return JsonResponse({'files': file_objects})
 
@@ -224,51 +210,28 @@ class FilesView(View):
         Checks whether the given file/folder in the given directory has been saved
         for backing up.
         """
-        path = join_file_path(backup_model.get_user_root(), directory, filename)
+        path = join_file_path(directory, filename)
         backup_file = backup_model.get_backup_file(path)
         if backup_file:
             return True
         else:
             return False
 
-    def _ensure_default_directory_level(self, path, backup_model):
-        """
-        Ensures that the default path set by the user is
-        at the beginning of the path.
-        """
-        user_root = backup_model.get_user_root()
-        if not path.startswith(user_root):
-            path = os.path.join(user_root, path.strip("/"))
-        return path
-
     def _path_is_directory(self, directory, filename, backup_model):
         """
         Checks whether the given file in in the given directory
         is a directory. Adds the user defined root to the front.
         """
-        if os.path.isdir(join_file_path(backup_model.get_user_root(), directory, filename)):
+        if os.path.isdir(join_file_path(directory, filename)):
             return True
         else:
             return False
-
-    def _get_user_root(self, backup_model):
-        """
-        Queries for the user root, if it hasn't already been queried.
-        Saves the user root to this class, so other funcions can access it as well.
-        """
-        return backup_model.get_user_root()
-        if backup_model and backup_model.pk:
-            self.user_root = backup_model.get_parameter('fs_root').value
-        else:
-            self.user_root = GlobalParameter.get_global_parameter(key='fs_root')
-        return self.user_root
 
 class RestoreFilesView(FilesView):
 
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
         backup_model = self._get_backup_model(backup_id)
-        self._get_user_root(backup_model) # Save backup_id to the model once, so we don't have to pass it around to all functions
         provider = backup_model.get_backup_provider()
         files = provider.get_remote_files(path)
         file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
