@@ -170,13 +170,14 @@ class Backup(models.Model):
         """
         scanner = self.get_file_scanner()
         provider = self.get_backup_provider()
-        print("Starting file scanning...")
+        logger = self._get_logger()
+        logger.log("Starting file scanning...", 'BACKUP', 'INFO')
         self.set_status('Scanning for files...')
         scanner.scan_files(self.get_all_backup_files())
-        print("Starting file backing...")
+        logger.log("Starting file backing...", 'BACKUP', 'INFO')
         self.set_status('Backing up files...')
         provider.backup_files(scanner.get_changed_files())
-        print("Starting file marking...")
+        logger.log("Starting file marking...", 'BACKUP', 'INFO')
         scanner.mark_new_files()
         self.set_status('Idle')
 

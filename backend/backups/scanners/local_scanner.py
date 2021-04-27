@@ -80,12 +80,13 @@ class LocalFilesScanner(BaseScanner):
             TODO: What if the the glob output becomes massive?
             """
             if os.path.isfile(backup_file.path): # Starting_path is not a folder, but a file
-                scanned_files = [backup_file.to_json()]
+                implicit_folders = path_to_folders(backup_file.path)
+                scanned_files = self.backup_model.create_backup_file_instances(implicit_folders, 'absolute')
             else:
                 scanned_files = glob.glob(backup_file.path + "/**/*", recursive=True)
+                implicit_folders = path_to_folders(backup_file.path)
+                scanned_files += implicit_folders
                 scanned_files = self.backup_model.create_backup_file_instances(scanned_files, 'absolute')
-                implicit_folders = path_to_folders(backup_file.relative_path)
-                scanned_files += self.backup_model.create_backup_file_instances(implicit_folders, 'relative')
             return scanned_files
 
         def _compare_scanned_files(self, scanned_files):

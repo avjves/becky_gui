@@ -34,13 +34,15 @@ def create_test_files(path, file_count):
     File_count specifies how many files/folders will be generated
     in total.
     """
-    random_files = [str(uuid.uuid4()) for i in range(0, file_count)]
+    prefix = str(uuid.uuid4())
+    random_files = [prefix + "_" + str(i) for i in range(0, file_count)]
     cur_f = path
     for random_file in random_files:
-        is_dir = random.randint(0, 5)
+        is_dir = random.randint(0, 1)
         if is_dir:
             cur_f = os.path.join(cur_f, random_file)
-            os.mkdir(cur_f)
+            if not os.path.exists(cur_f):
+                os.mkdir(cur_f)
         else:
             open(os.path.join(cur_f, random_file), 'w').write(random_file)
 

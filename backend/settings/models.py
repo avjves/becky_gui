@@ -27,7 +27,7 @@ class GlobalParameter(models.Model):
         set a default value for a key that might not exist yet.
         """
         try:
-            param = GlobalParameter.objects.get(key=key).value
+            param = GlobalParameter.objects.get(key=key)
             return param
         except ObjectDoesNotExist:
             return ''
