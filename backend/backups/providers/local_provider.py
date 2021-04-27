@@ -4,7 +4,7 @@ import shelve
 from shutil import copyfile
 from backups.providers.base_provider import BaseProvider
 from logs.models import BackupLogger
-from becky.utils import remove_prefix
+from becky.utils import remove_prefix, join_file_path, path_to_folders
 
 """
 A local backup provider that can backup files from one location
@@ -26,7 +26,7 @@ class LocalProvider(BaseProvider):
         going through files one at a time.
         """
         self._log('INFO', 'Started backing up files.')
-        list_of_files.sort(key=lambda x: x.path) # Sort, so folders will be created before any files are copied in.
+        list_of_files.sort(key=lambda x: len(x.path)) # Sort, so folders will be created before any files are copied in.
 
         copy_path = self._get_parameter('output_path')
         self._log('DEBUG', 'Saving files to {}'.format(copy_path))
@@ -69,16 +69,19 @@ class LocalProvider(BaseProvider):
         copy_path = self._get_parameter('output_path')
         files_to_restore = []
         for selection in selections:
-            selection_files = [selection.path] + glob.glob(selection.path + "/**/*", recursive=True)
+            selection_files = path_to_folders(selection.path) + glob.glob(selection.path + "/**/*", recursive=True)
             files_to_restore += selection_files
         self._log('INFO', '{} files/folders to restore.'.format(len(files_to_restore)))
-
+        files_to_restore = list(set(files_to_restore))
+        files_to_restore.sort(key=len)
         for selection_file in files_to_restore:
-            selection_file = self.backup_model.create_backup_file_instance(selection_file, 'absolute')
+            selection_file = self.backup_model.create_backup_file_instance(selection_file)
             restored_file = self._generate_output_path(selection_file, restore_path)
-            backup_file = self.backup_model.create_backup_file_instance(selection.relative_path, 'relative')
-            backup_file.path = os.path.join(copy_path, remove_prefix(backup_file.relative_path, '/'))
-            self._copy_file(backup_file, restored_file, create_folders=True)
+            backup_file = self.backup_model.create_backup_file_instance(selection_file.path)
+            backup_file.path = join_file_path(copy_path, backup_file.path)
+            # print("selection", selection_file.path, "backup_file", backup_file.path, "restored file", restored_file.path)
+            # import pdb;pdb.set_trace()
+            self._copy_file(backup_file, restored_file, create_folders=False)
         self._log('INFO', '{} files/folders restored.'.format(len(files_to_restore)))
 
     def _get_parameter(self, key):

@@ -55,24 +55,11 @@ class LocalFilesScanner(BaseScanner):
             for backup_file in backup_files:
                 self._log('DEBUG', 'Scanning for files from selected path {}'.format(backup_file.path))
                 scanned_files += self._scan_local_files(backup_file)
+            scanned_files = list(set(scanned_files))
+            scanned_files = self.backup_model.create_backup_file_instances(scanned_files)
             self._log('INFO', 'Finished file scanning.')
             self._log('INFO', 'Starting file comparisions.')
             self._compare_scanned_files(scanned_files)
-
-
-        def _open_db_connection(self):
-            """
-            Checks whether its own database already exists or not
-            and if it doesn't, it creates a new one.
-            Returns a opened connection to said database.
-            """
-            # if not os.path.exists(self.parameters['database_location']):
-            # database_location = '/home/avjves/fs.sqlite3'
-            database_location = '/home/avjves/dbs/{}.sqlite3'.format(self.backup_model.name)
-            # if not os.path.exists(database_location):
-            db = shelve.open(database_location)
-            return db
-
 
         def _scan_local_files(self, backup_file):
             """

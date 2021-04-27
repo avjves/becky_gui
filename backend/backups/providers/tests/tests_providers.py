@@ -54,6 +54,13 @@ class ProviderTests(TestCase):
 ##############################################################
         
     def _test_backup_model_single_file(self, backup_model):
+        """
+        Tests backing up random files and restoring a single file from the backup.
+        Restores both the file in question as well as all the folders that take 
+        to the specific file.
+        Makes sure only the correct file/folders are in the restore folder and that the
+        file is actually a file.
+        """
         test_directory = TemporaryDirectory()
         for i in range(0, 5):
             restore_directory = TemporaryDirectory()
@@ -67,11 +74,20 @@ class ProviderTests(TestCase):
             files_to_backup = path_to_folders(file_to_backup)
             restored_files = glob.glob(restore_directory.name + '/**/*', recursive=True)
             restored_files = [remove_prefix(f, restore_directory.name) for f in restored_files]
-            self.assertSetEqual(set(files_to_backup), set(restored_files), fail_message)
+            self.assertFalse(os.path.isdir(restored_files[-1])) # Last file has to be a file, not a folder!
+            self.assertSetEqual(set(files_to_backup), set(restored_files))
             restore_directory.cleanup()
         test_directory.cleanup()
+        self._clear_db(backup_model)
 
     def _test_backup_model_single_folder(self, backup_model):
+        """
+        Tests backing up random files/folders and restoring a single folder from the backup.
+        Restores all folders that build up to the folder in question as well as all files
+        and folders inside the specific folder.
+        Makes sure that only the necessary files are restored and that their file formats
+        are set correctly.
+        """
         test_directory = TemporaryDirectory()
         for i in range(0, 5):
             restore_directory = TemporaryDirectory()
@@ -87,6 +103,27 @@ class ProviderTests(TestCase):
             restored_files = glob.glob(restore_directory.name + '/**/*', recursive=True)
             restored_files = [remove_prefix(f, restore_directory.name) for f in restored_files]
             restored_files.insert(0, folder_to_restore)
-            self.assertSetEqual(set(files_to_be_restored), set(restored_files), fail_message)
+            self.assertSetEqual(set(files_to_be_restored), set(restored_files), 'Missing files on iteration {}.'.format(i))
+            for f in files_to_be_restored:
+                backup_file_type = 'folder' if os.path.isdir(f) else 'file'
+                restored_file_type = 'folder' if os.path.isdir(restore_directory.name + f) else 'file'
+                self.assertTrue(backup_file_type == restored_file_type, 'File type mismatch on iteration {}.'.format(i))
             restore_directory.cleanup()
         test_directory.cleanup()
+        self._clear_db(backup_model)
+
+
+    def _clear_db(self, backup_model):
+        """
+        Cleares the state data from the backup model.
+        This is called in case the state database is 
+        using a different provider than the ORM model
+        used by Django, which would automatically be rolled
+        back at the end of the test.
+        """
+        database = backup_model.get_state_database()
+        provider = backup_model.get_backup_provider()
+        database.open_connection(provider.tag)
+        database.clear()
+        database.close_connection()
+
