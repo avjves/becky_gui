@@ -7,6 +7,7 @@ import BackupView from './BackupView.js';
 import SettingsView from './SettingsView.js';
 
 import Navbar from '../objects/Navbar.js';
+import ProgressBar from '../objects/ProgressBar.js';
 
 class MainView extends React.Component {
 
@@ -25,6 +26,7 @@ class MainView extends React.Component {
                             <div className="container-fluid">
                                 <div className="row justify-content-md-center m-2">
                                     <div className="col-8">
+                                        <ProgressBar />
                                         <div className="card p-2">
                                             <Switch>
                                                 <Route path="/settings">
@@ -34,7 +36,7 @@ class MainView extends React.Component {
                                                     <BackupView />
                                                 </Route>
                                                 <Route path="/">
-                                                    <HomeView />
+                                                    <BackupView />
                                                 </Route>
                                             </Switch>
                                         </div>

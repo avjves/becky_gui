@@ -26,7 +26,7 @@ class SingleBackupView extends React.Component {
 
     fetchBackupData() {
         if(this.props.backupId != -1) { // Not a new backup
-            fetch("http://localhost:8000/backups/" + this.props.backupId, {
+            fetch("http://localhost:8000/backups/backup/" + this.props.backupId, {
                 method: 'GET',
                 credentials: "include",
             })

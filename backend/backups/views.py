@@ -253,3 +253,13 @@ class RestoreFilesView(FilesView):
         """
         return False
 
+
+class StatusView(View):
+
+    def get(self, request, **kwargs):
+        status = {'status_message': 'Idle'}
+        for backup_model in Backup.objects.all():
+            if backup_model.is_running():
+                status['status_message'] = backup_model.get_status()
+        return JsonResponse(status)
+

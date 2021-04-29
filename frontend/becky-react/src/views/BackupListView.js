@@ -3,6 +3,7 @@ import Button from "@material-ui/core/Button";
 import { BrowserRouter as Router, Switch, Route, Link, UseRouteMatch, useParams } from "react-router-dom";
 
 import BackupListObject from '../objects/BackupListObject.js';
+import Header from '../objects/Header.js';
 
 class BackupListView extends React.Component {
 
@@ -14,7 +15,7 @@ class BackupListView extends React.Component {
     render() {
         return (
         <div>
-            <h1> All backups: </h1>
+            <Header size="h2">All backups: </Header>
                 {this.props.backups.map((backup, index) => {
                     return (
                         <div key={index} className="card m-2">

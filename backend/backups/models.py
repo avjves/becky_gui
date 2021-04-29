@@ -14,7 +14,7 @@ class Backup(models.Model):
     name = models.CharField(max_length=128, null=False)
     provider = models.CharField(max_length=128, null=False)
     running = models.BooleanField(default=False)
-    status = models.CharField(max_length=128, default='idle')
+    status = models.CharField(max_length=128, default='Idle')
 
     def to_simple_json(self):
         return {'id': self.id, 'name': self.name, 'provider': self.provider, 'running': self.running, 'status': self.status}
@@ -28,7 +28,6 @@ class Backup(models.Model):
         json_output['selections'] = file_selections
 
         return json_output
-
 
     def create_backup_file_instance(self, path):
         """
@@ -140,6 +139,23 @@ class Backup(models.Model):
         """
         backup_files = self.files.all()
         return backup_files
+
+    def get_status(self):
+        """
+        Returns the current status of the backup model.
+        I.e if it's running and in what step is it right now.
+        """
+        return self.status
+
+    def is_running(self):
+        """
+        Returns whether the current backup model is in middle of a 
+        backup.
+        """
+        if self.status.lower() == 'Idle':
+            return False
+        else:
+            return True
 
     def restore_files(self, selections, restore_path):
         """
