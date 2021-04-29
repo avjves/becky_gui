@@ -14,14 +14,14 @@ class BaseDatabase(ABC):
 
 
     @abstractmethod
-    def get(self, key):
+    def get(self, state_name, key):
         pass
 
 
     @abstractmethod
-    def save(self, key, value):
+    def save(self, state_name, key, value):
         pass
 
     @abstractmethod
-    def clear(self):
+    def clear(self, state_name):
         pass

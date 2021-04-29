@@ -31,9 +31,8 @@ class LocalProvider(BaseProvider):
         copy_path = self._get_parameter('output_path')
         self._log('DEBUG', 'Saving files to {}'.format(copy_path))
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
-        self.db.open_connection(self.tag)
         self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(0, len(list_of_files)), 0, True)
-        remote_files = self.db.get('remote_files', [])
+        remote_files = self.db.get(self.tag, 'remote_files', [])
         for file_in_index, file_in in enumerate(list_of_files):
             file_out = self._generate_output_path(file_in, copy_path)
             self._copy_file(file_in, file_out)
@@ -42,15 +41,13 @@ class LocalProvider(BaseProvider):
                 self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
                 self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(file_in_index, len(list_of_files)), int((file_in_index / len(list_of_files)) * 100), True)
         self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))
-        self.db.save('remote_files', remote_files)
-        self.db.close_connection()
+        self.db.save(self.tag, 'remote_files', remote_files)
 
     def get_remote_files(self, path):
         """
         Returns the the names of backed up files at the given path.
         """
-        self.db.open_connection(self.tag)
-        remote_files = self.db.get('remote_files', [])
+        remote_files = self.db.get(self.tag, 'remote_files', [])
         ##TODO MAKE THIS BETTER
         remote_files_to_return = set()
         for remote_file in remote_files:
@@ -60,7 +57,6 @@ class LocalProvider(BaseProvider):
             filename = remote_filename.split('/', 1)[0]
             if filename:
                 remote_files_to_return.add(filename)
-        self.db.close_connection()
         return list(remote_files_to_return)
 
     def restore_files(self, selections, restore_path):

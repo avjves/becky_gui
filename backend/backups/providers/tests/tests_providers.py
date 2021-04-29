@@ -123,7 +123,5 @@ class ProviderTests(TestCase):
         """
         database = backup_model.get_state_database()
         provider = backup_model.get_backup_provider()
-        database.open_connection(provider.tag)
-        database.clear()
-        database.close_connection()
+        database.clear(provider.tag)
 

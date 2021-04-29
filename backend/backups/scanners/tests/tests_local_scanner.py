@@ -16,17 +16,13 @@ class LocalScannerTests(TestCase):
         self.backup_model.add_parameter('fs_root', '/')
         self.scanner = self.backup_model.get_file_scanner()
         self.database = self.backup_model.get_state_database()
-        self.database.open_connection(self.scanner.tag)
-        self.database.clear()
-        self.database.close_connection()
+        self.database.clear(self.scanner.tag)
         self.test_directory =  TemporaryDirectory()
         self._create_test_files()
 
     def tearDown(self):
         self.test_directory.cleanup()
-        self.database.open_connection(self.scanner.tag)
-        self.database.clear()
-        self.database.close_connection()
+        self.database.clear(self.scanner.tag)
 
 
 
@@ -84,12 +80,10 @@ class LocalScannerTests(TestCase):
         initial_backup_file = self.backup_model.create_backup_file_instance(self.test_directory.name)
         self.scanner.scan_files([initial_backup_file])
         self.scanner.mark_new_files()
-        self.database.open_connection(self.scanner.tag)
-        new_files = [new_file.path for new_file in self.database.get('new_files', [])]
-        backed_up_files = [backed_up_file.path for backed_up_file in self.database.get('backed_up_files', [])]
+        new_files = [new_file.path for new_file in self.database.get(self.scanner.tag, 'new_files', [])]
+        backed_up_files = [backed_up_file.path for backed_up_file in self.database.get(self.scanner.tag, 'backed_up_files', [])]
         self.assertEqual(new_files, [])
         self.assertSetEqual(set(backed_up_files), set(all_files))
-        self.database.close_connection()
 
 
     def test_mark_new_files(self):
@@ -107,12 +101,10 @@ class LocalScannerTests(TestCase):
         all_files = all_files + new_all_files
         self.scanner.scan_files([initial_backup_file])
         self.scanner.mark_new_files()
-        self.database.open_connection(self.scanner.tag)
-        new_files = [new_file.path for new_file in self.database.get('new_files', [])]
-        backed_up_files = [backed_up_file.path for backed_up_file in self.database.get('backed_up_files', [])]
+        new_files = [new_file.path for new_file in self.database.get(self.scanner.tag, 'new_files', [])]
+        backed_up_files = [backed_up_file.path for backed_up_file in self.database.get(self.scanner.tag, 'backed_up_files', [])]
         self.assertEqual(new_files, [])
         self.assertSetEqual(set(backed_up_files), set(all_files))
-        self.database.close_connection()
 
 
     def test_files_deleted(self):

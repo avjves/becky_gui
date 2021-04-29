@@ -16,13 +16,9 @@ class LocalProviderTests(TestCase):
         self.backup_model.add_parameter('fs_root', '/')
         self.scanner = self.backup_model.get_file_scanner()
         self.database = self.backup_model.get_state_database()
-        self.database.open_connection(self.scanner.tag)
-        self.database.clear()
-        self.database.close_connection()
         self.provider = self.backup_model.get_backup_provider()
-        self.database.open_connection(self.provider.tag)
-        self.database.clear()
-        self.database.close_connection()
+        self.database.clear(self.scanner.tag)
+        self.database.clear(self.provider.tag)
         self.test_directory =  TemporaryDirectory()
         self.backup_directory = TemporaryDirectory()
         self.restore_directory = TemporaryDirectory()
@@ -35,12 +31,8 @@ class LocalProviderTests(TestCase):
         self.test_directory.cleanup()
         self.backup_directory.cleanup()
         self.restore_directory.cleanup()
-        self.database.open_connection(self.scanner.tag)
-        self.database.clear()
-        self.database.close_connection()
-        self.database.open_connection(self.provider.tag)
-        self.database.clear()
-        self.database.close_connection()
+        self.database.clear(self.scanner.tag)
+        self.database.clear(self.provider.tag)
 
     def test_backup_intial_files(self):
         """
@@ -76,10 +68,8 @@ class LocalProviderTests(TestCase):
         self.backup_model.run_backup()
         copied_files = glob.glob(self.backup_directory.name + '/**/*', recursive=True)
         copied_files = [remove_prefix(f, self.backup_directory.name) for f in copied_files]
-        self.database.open_connection(self.provider.tag)
-        remote_files = self.database.get('remote_files')
+        remote_files = self.database.get(self.provider.tag, 'remote_files')
         remote_files = [f.path for f in remote_files]
-        self.database.close_connection()
         self.assertSetEqual(set(copied_files), set(remote_files))
 
     def test_new_remote_files_database_state(self):
@@ -92,9 +82,7 @@ class LocalProviderTests(TestCase):
         self.backup_model.run_backup()
         copied_files = glob.glob(self.backup_directory.name + '/**/*', recursive=True)
         copied_files = [remove_prefix(f, self.backup_directory.name) for f in copied_files]
-        self.database.open_connection(self.provider.tag)
-        remote_files = self.database.get('remote_files')
-        self.database.close_connection()
+        remote_files = self.database.get(self.provider.tag, 'remote_files')
         remote_files = [f.path for f in remote_files]
         self.assertSetEqual(set(copied_files), set(remote_files))
 

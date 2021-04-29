@@ -42,48 +42,52 @@ class ShelveDatabase(BaseDatabase):
             delattr(self, 'state_name')
 
 
-    def get(self, key, default_value=None):
+    def get(self, state_name, key, default_value=None):
         """
         Retrieves data from the database with the given key.
         If it doesn't exist, throws an exception, unless a default value has been specified.
         """
-        if not hasattr(self, 'db'):
-            raise exceptions.DatabaseNotOpenedException
+        self.open_connection(state_name)
+
         if key not in self.db[self.state_name] and default_value != None:
+            self.close_connection()
             return default_value
         if key not in self.db[self.state_name]:
+            self.close_connection()
             raise exceptions.KeyNotFoundException(key)
         try:
             data = self.db[self.state_name].get(key)
+            self.close_connection()
             return data
         except Exception as e:
+            self.close_connection()
             raise exceptions.DatabaseInteractionException(key=key, message='Could not retrieve data with the given key.', exception=e)
 
-    def save(self, key, value):
+    def save(self, state_name, key, value):
         """
         Saves value to the DB with the given key.
         Any data currently saved under the key will be overwritten.
         """ 
-        if not hasattr(self, 'db'):
-            raise exceptions.DatabaseNotOpenedException
-
+        self.open_connection(state_name)
         try:
             state_data = self.db[self.state_name]
             state_data[key] = value
             self.db[self.state_name] = state_data
+            self.close_connection()
         except Exception as e:
+            self.close_connection()
             raise exceptions.DatabaseInteractionException(key=key, message='Could not save data with the given key.', exception=e)
 
 
-    def clear(self):
+    def clear(self, state_name):
         """
         Completely clears the state data from the current database.
         """
-        if not hasattr(self, 'db'):
-            raise exceptions.DatabaseNotOpenedException
-
+        self.open_connection(state_name)
         try:
             self.db[self.state_name] = {}
+            self.close_connection()
         except Exception as e:
+            self.close_connection()
             raise exceptions.DatabaseInteractionException(key=key, message='Could not save data with the given key.', exception=e)
 

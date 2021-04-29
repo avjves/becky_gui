@@ -25,23 +25,19 @@ class LocalFilesScanner(BaseScanner):
             """
             Retrieves all found files to be backed up from the database.
             """
-            self.db.open_connection(self.tag)
-            new_files = list(self.db.get('new_files'))
-            self.db.close_connection()
+            new_files = list(self.db.get(self.tag, 'new_files'))
             return new_files
 
         def mark_new_files(self):
             """
             Marks new files as backed up files.
             """
-            self.db.open_connection(self.tag)
-            backed_up_files = self.db.get('backed_up_files', [])
-            new_files = self.db.get('new_files', [])
+            backed_up_files = self.db.get(self.tag, 'backed_up_files', [])
+            new_files = self.db.get(self.tag, 'new_files', [])
             backed_up_files = backed_up_files + new_files
-            self.db.save('backed_up_files', backed_up_files)
-            self.db.save('new_files', [])
+            self.db.save(self.tag, 'backed_up_files', backed_up_files)
+            self.db.save(self.tag, 'new_files', [])
             self._log('INFO', 'Marked {} files as backed up. Now {} files in total.'.format(len(new_files), len(backed_up_files)))
-            self.db.close_connection()
 
 
         def scan_files(self, backup_files):
@@ -86,8 +82,7 @@ class LocalFilesScanner(BaseScanner):
             present in the database. Any changes to previously backed up files
             would therefore not be backed up, ever.
             """
-            self.db.open_connection(self.tag)
-            files = self.db.get('backed_up_files', [])
+            files = self.db.get(self.tag, 'backed_up_files', [])
             backed_up_paths = set([f.path for f in files])
             new_files = []
             for new_file_i, new_file in enumerate(scanned_files):
@@ -95,9 +90,8 @@ class LocalFilesScanner(BaseScanner):
                     new_files.append(new_file)
                 if new_file_i % 100 == 0:
                     self.backup_model.set_status(status_message='Comparing found files with backed up files. \t {} new files have been found so far.'.format(len(new_files)), percentage=int((new_file_i / len(scanned_files))*100), running=True)
-            self.db.save('new_files', new_files)
+            self.db.save(self.tag, 'new_files', new_files)
             self._log('INFO', 'Found {} new files.'.format(len(new_files)))
-            self.db.close_connection()
 
         def _log(self, level, message):
             """
