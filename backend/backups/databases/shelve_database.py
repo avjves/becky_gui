@@ -16,7 +16,7 @@ class ShelveDatabase(BaseDatabase):
         self.db_loc = '{}.shelve'.format(os.path.join("/home/avjves/dbs", self.backup_name))
 
 
-    def open_connection(self, state_name):
+    def _open_connection(self, state_name):
         """
         Opens a shelve connection.
         If the connection opening worked,
@@ -31,7 +31,7 @@ class ShelveDatabase(BaseDatabase):
         except:
             raise exceptions.CouldNotOpenDatabaseException(self.db_loc)
     
-    def close_connection(self):
+    def _close_connection(self):
         """
         Closes the connection to the shelve database if said
         connection exists.
@@ -47,20 +47,20 @@ class ShelveDatabase(BaseDatabase):
         Retrieves data from the database with the given key.
         If it doesn't exist, throws an exception, unless a default value has been specified.
         """
-        self.open_connection(state_name)
+        self._open_connection(state_name)
 
         if key not in self.db[self.state_name] and default_value != None:
-            self.close_connection()
+            self._close_connection()
             return default_value
         if key not in self.db[self.state_name]:
-            self.close_connection()
+            self._close_connection()
             raise exceptions.KeyNotFoundException(key)
         try:
             data = self.db[self.state_name].get(key)
-            self.close_connection()
+            self._close_connection()
             return data
         except Exception as e:
-            self.close_connection()
+            self._close_connection()
             raise exceptions.DatabaseInteractionException(key=key, message='Could not retrieve data with the given key.', exception=e)
 
     def save(self, state_name, key, value):
@@ -68,14 +68,14 @@ class ShelveDatabase(BaseDatabase):
         Saves value to the DB with the given key.
         Any data currently saved under the key will be overwritten.
         """ 
-        self.open_connection(state_name)
+        self._open_connection(state_name)
         try:
             state_data = self.db[self.state_name]
             state_data[key] = value
             self.db[self.state_name] = state_data
-            self.close_connection()
+            self._close_connection()
         except Exception as e:
-            self.close_connection()
+            self._close_connection()
             raise exceptions.DatabaseInteractionException(key=key, message='Could not save data with the given key.', exception=e)
 
 
@@ -83,11 +83,11 @@ class ShelveDatabase(BaseDatabase):
         """
         Completely clears the state data from the current database.
         """
-        self.open_connection(state_name)
+        self._open_connection(state_name)
         try:
             self.db[self.state_name] = {}
-            self.close_connection()
+            self._close_connection()
         except Exception as e:
-            self.close_connection()
+            self._close_connection()
             raise exceptions.DatabaseInteractionException(key=key, message='Could not save data with the given key.', exception=e)
 
