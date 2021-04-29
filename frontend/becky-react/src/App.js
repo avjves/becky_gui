@@ -12,13 +12,14 @@ class App extends React.Component {
 
         this.state = {
             csrf: "",
-            isAuthenticated: false,
+            isAuthenticated: true,
+            visible: true,
         }
         this.setAuthenticated = this.setAuthenticated.bind(this);
     }
 
     componentDidMount() {
-        this.getSession();
+        //this.getSession();
     }
 
     getCSRF() {
