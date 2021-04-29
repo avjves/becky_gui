@@ -8,21 +8,25 @@ class ProgressBar extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            statusMessage: '',
+            statusMessage: 'Idle',
+            percentage: '0',
         }
         this.fetchCurrentStatus = this.fetchCurrentStatus.bind(this);
     }
 
     componentDidMount() {
-        //setInterval(this.fetchCurrentStatus, 50000);
-        this.fetchCurrentStatus();
+        setInterval(this.fetchCurrentStatus, 1000);
+        //this.fetchCurrentStatus();
     }
 
     fetchCurrentStatus() {
         axios.get("http://localhost:8000/backups/status/")
         .then((data) => {
-            console.log(data)
-            this.setState({statusMessage: data.data.status_message});
+            this.setState({
+                statusMessage: data.data.status_message,
+                percentage: data.data.percentage,
+            });
+
         })
         .catch((err) => {
             this.setState({statusMessage: 'ERROR'});
@@ -34,11 +38,14 @@ class ProgressBar extends React.Component {
         return (
             <div className="card p-2 mb-3">
                 <div className="justify-content-center row">
-                    <div className="col-3">
-                        <Header size="h4"> Current task: </Header>
+                    <div className="col-2">
+                        <Header size="h4"> Current status: </Header>
                     </div>
-                    <div className="col-7">
-                        <span> {this.state.statusMessage} </span>
+                    <div className="col-10">
+                        <div className="d-table m-auto">
+                            <span> {this.state.statusMessage} </span>
+                        </div>
+                        <Line percent={this.state.percentage}/>
                     </div>
                 </div>
             </div>

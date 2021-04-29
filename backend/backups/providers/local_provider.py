@@ -32,13 +32,15 @@ class LocalProvider(BaseProvider):
         self._log('DEBUG', 'Saving files to {}'.format(copy_path))
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
         self.db.open_connection(self.tag)
+        self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(0, len(list_of_files)), 0, True)
         remote_files = self.db.get('remote_files', [])
         for file_in_index, file_in in enumerate(list_of_files):
             file_out = self._generate_output_path(file_in, copy_path)
             self._copy_file(file_in, file_out)
             remote_files.append(file_in)
-            if file_in_index % 1000 == 0:
+            if file_in_index % 100 == 0:
                 self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
+                self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(file_in_index, len(list_of_files)), int((file_in_index / len(list_of_files)) * 100), True)
         self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))
         self.db.save('remote_files', remote_files)
         self.db.close_connection()

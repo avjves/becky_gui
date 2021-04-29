@@ -30,7 +30,7 @@ class ProviderTests(TestCase):
         pass
 
     def test_local_provider_single_folder(self):
-        backup_model = Backup(name='_test_backup', provider='local', running=0, status='')
+        backup_model = Backup(name='_test_backup', provider='local', running=0)
         backup_model.save()
         backup_folder = TemporaryDirectory()
         provider_settings = json.dumps({'output_path': backup_folder.name})
@@ -39,7 +39,7 @@ class ProviderTests(TestCase):
         backup_folder.cleanup()
         
     def test_local_provider_single_file(self):
-        backup_model = Backup(name='_test_backup', provider='local', running=0, status='')
+        backup_model = Backup(name='_test_backup', provider='local', running=0)
         backup_model.save()
         backup_folder = TemporaryDirectory()
         provider_settings = json.dumps({'output_path': backup_folder.name})

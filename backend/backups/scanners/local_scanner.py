@@ -52,9 +52,11 @@ class LocalFilesScanner(BaseScanner):
             """
             self._log('INFO', 'Started file scanning.')
             scanned_files = []
-            for backup_file in backup_files:
+            for backup_file_i, backup_file in enumerate(backup_files):
+                self.backup_model.set_status(status_message='Scanning for files from {} \t {} files found so far...'.format(backup_file.path, len(scanned_files)), percentage=int((backup_file_i / len(backup_files))*100), running=True)
                 self._log('DEBUG', 'Scanning for files from selected path {}'.format(backup_file.path))
                 scanned_files += self._scan_local_files(backup_file)
+            self.backup_model.set_status(status_message='Files found in total {}...'.format(len(scanned_files)), percentage=100, running=True)
             scanned_files = list(set(scanned_files))
             scanned_files = self.backup_model.create_backup_file_instances(scanned_files)
             self._log('INFO', 'Finished file scanning.')
@@ -87,7 +89,12 @@ class LocalFilesScanner(BaseScanner):
             self.db.open_connection(self.tag)
             files = self.db.get('backed_up_files', [])
             backed_up_paths = set([f.path for f in files])
-            new_files = [new_file for new_file in scanned_files if new_file.path not in backed_up_paths]
+            new_files = []
+            for new_file_i, new_file in enumerate(scanned_files):
+                if new_file.path not in backed_up_paths:
+                    new_files.append(new_file)
+                if new_file_i % 100 == 0:
+                    self.backup_model.set_status(status_message='Comparing found files with backed up files. \t {} new files have been found so far.'.format(len(new_files)), percentage=int((new_file_i / len(scanned_files))*100), running=True)
             self.db.save('new_files', new_files)
             self._log('INFO', 'Found {} new files.'.format(len(new_files)))
             self.db.close_connection()

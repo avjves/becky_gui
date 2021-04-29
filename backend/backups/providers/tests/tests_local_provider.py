@@ -11,7 +11,7 @@ from becky.utils import create_test_files, remove_prefix, path_to_folders
 
 class LocalProviderTests(TestCase):
     def setUp(self):
-        self.backup_model = Backup(name='_test_backup', provider='local', running=0, status='')
+        self.backup_model = Backup(name='_test_backup', provider='local', running=0)
         self.backup_model.save()
         self.backup_model.add_parameter('fs_root', '/')
         self.scanner = self.backup_model.get_file_scanner()

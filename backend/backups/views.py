@@ -121,11 +121,11 @@ class BackupRunnerView(View):
 
     def get(self, request, backup_id):
         backup_model = Backup.objects.get(pk=backup_id)
-        backupper =  Backupper(backup_model)
+        # backupper =  Backupper(backup_model)
         try:
-            backupper.backup()
+            backup_model.run_backup()
         except Exception as e:
-            backup_model.set_status('Idle due to an error')
+            backup_model.set_status('Idle due to an error', percentage=0, running=0)
             raise e
         return HttpResponse(status=200)
 
@@ -257,9 +257,9 @@ class RestoreFilesView(FilesView):
 class StatusView(View):
 
     def get(self, request, **kwargs):
-        status = {'status_message': 'Idle'}
+        status = {'status_message': 'Idle', 'percentage': '100'}
         for backup_model in Backup.objects.all():
             if backup_model.is_running():
-                status['status_message'] = backup_model.get_status()
+                status = backup_model.get_status()
         return JsonResponse(status)
 

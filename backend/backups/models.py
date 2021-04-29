@@ -1,6 +1,6 @@
 import json
 import os
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ObjectDoesNotExist
 
 import backups.providers as providers
@@ -14,10 +14,9 @@ class Backup(models.Model):
     name = models.CharField(max_length=128, null=False)
     provider = models.CharField(max_length=128, null=False)
     running = models.BooleanField(default=False)
-    status = models.CharField(max_length=128, default='Idle')
 
     def to_simple_json(self):
-        return {'id': self.id, 'name': self.name, 'provider': self.provider, 'running': self.running, 'status': self.status}
+        return {'id': self.id, 'name': self.name, 'provider': self.provider, 'running': self.running}
 
     def to_detailed_json(self):
         json_output = self.to_simple_json()
@@ -143,16 +142,20 @@ class Backup(models.Model):
     def get_status(self):
         """
         Returns the current status of the backup model.
-        I.e if it's running and in what step is it right now.
+        Returns the current status message and the current percentage of
+        the task at hand.
         """
-        return self.status
+        if self.statuses.exists():
+            return self.statuses.first().to_json()
+        else:
+            return {'status_message': 'Idle', 'percentage': '100', 'running': 0}
 
     def is_running(self):
         """
         Returns whether the current backup model is in middle of a 
         backup.
         """
-        if self.status.lower() == 'Idle':
+        if self.get_status()['running'] == 'Idle':
             return False
         else:
             return True
@@ -177,21 +180,23 @@ class Backup(models.Model):
         provider = self.get_backup_provider()
         logger = self._get_logger()
         logger.log("Starting file scanning...", 'BACKUP', 'INFO')
-        self.set_status('Scanning for files...')
+        # self.set_status('Scanning for files...')
         scanner.scan_files(self.get_all_backup_files())
         logger.log("Starting file backing...", 'BACKUP', 'INFO')
-        self.set_status('Backing up files...')
+        # self.set_status('Backing up files...')
         provider.backup_files(scanner.get_changed_files())
         logger.log("Starting file marking...", 'BACKUP', 'INFO')
         scanner.mark_new_files()
-        self.set_status('Idle')
+        self.set_status('Idle', 0, 0)
 
-    def set_status(self, status):
+    def set_status(self, status_message, percentage, running):
         """
         Sets the current status of the backup model to the given status.
         """
-        self.status = status
-        self.save()
+        with transaction.atomic():
+            new_status = BackupStatus(backup=self, message=status_message, percentage=percentage, running=running)
+            self.statuses.all().delete()
+            new_status.save()
 
     def _get_logger(self):
         """
@@ -211,10 +216,17 @@ class BackupFile(models.Model):
         return {'path': self.path}
         
 
+class BackupStatus(models.Model):
+    backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='statuses')
+    message = models.TextField()
+    percentage = models.IntegerField()
+    running = models.BooleanField()
+
+    def to_json(self):
+        return {'status_message': self.message, 'percentage': self.percentage, 'running': self.running}
+
 class BackupParameter(models.Model):
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='parameters')
     key = models.CharField(max_length=64, null=False)
     value = models.CharField(max_length=1024, null=False)
-
-
 
