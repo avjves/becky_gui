@@ -12,10 +12,9 @@ to another, within a local system.
 """
 class LocalProvider(BaseProvider):
     
-    def __init__(self, parameters, state_database, backup_model):
+    def __init__(self, parameters, backup_model):
         self.parameters = parameters
         self.backup_model = backup_model
-        self.db = state_database
         self.logger = BackupLogger(backup_model)
         self.tag = 'LocalBackupProvider'
 

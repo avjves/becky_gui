@@ -14,19 +14,11 @@ its results.
 
 class LocalFilesScanner(BaseScanner):
     
-        def __init__(self, parameters, state_database, backup_model):
+        def __init__(self, parameters, backup_model):
             self.parameters = parameters
             self.logger = BackupLogger(backup_model)
-            self.db = state_database
             self.backup_model = backup_model
             self.tag = 'LocalFilesScanner'
-
-        def get_changed_files(self):
-            """
-            Retrieves all found files to be backed up from the database.
-            """
-            new_files = list(self.db.get(self.tag, 'new_files'))
-            return new_files
 
         def scan_files(self, backup_files):
             """

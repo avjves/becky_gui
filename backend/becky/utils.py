@@ -1,6 +1,7 @@
 import os
 import uuid
 import random
+from nose.tools import nottest
 
 def format_timestamp_gui(timestamp):
     """
@@ -30,6 +31,7 @@ def remove_prefix(string, prefix):
     else:
         return string[:]
 
+@nottest
 def create_test_files(path, file_count):
     """
     Generates new random empty files/folders to the given path.

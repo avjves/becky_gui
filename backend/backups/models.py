@@ -5,7 +5,6 @@ from django.core.exceptions import ObjectDoesNotExist
 
 import backups.providers as providers
 import backups.scanners as scanners
-import backups.databases as databases
 from settings.models import GlobalParameter
 from logs.models import BackupLogger
 from becky.utils import remove_prefix
@@ -68,13 +67,6 @@ class Backup(models.Model):
         """
         scanner = scanners.get_scanner('local', self)
         return scanner
-
-    def get_state_database(self):
-        """
-        Returns a database that reflects the internal state of this backup model.
-        """
-        state_database = databases.get_database('shelve', self)
-        return state_database
 
     def get_provider_parameters(self):
         params = {}

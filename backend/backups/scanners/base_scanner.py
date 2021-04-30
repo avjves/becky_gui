@@ -9,10 +9,3 @@ class BaseScanner(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def get_changed_files(self):
-        """
-        Provides all files that require backing up since the last
-        backup/scan.
-        """
-        raise NotImplementedError

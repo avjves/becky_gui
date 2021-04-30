@@ -78,7 +78,6 @@ class ProviderTests(TestCase):
             self.assertSetEqual(set(files_to_backup), set(restored_files))
             restore_directory.cleanup()
         test_directory.cleanup()
-        self._clear_db(backup_model)
 
     def _test_backup_model_single_folder(self, backup_model):
         """
@@ -110,18 +109,4 @@ class ProviderTests(TestCase):
                 self.assertTrue(backup_file_type == restored_file_type, 'File type mismatch on iteration {}.'.format(i))
             restore_directory.cleanup()
         test_directory.cleanup()
-        self._clear_db(backup_model)
-
-
-    def _clear_db(self, backup_model):
-        """
-        Cleares the state data from the backup model.
-        This is called in case the state database is 
-        using a different provider than the ORM model
-        used by Django, which would automatically be rolled
-        back at the end of the test.
-        """
-        database = backup_model.get_state_database()
-        provider = backup_model.get_backup_provider()
-        database.clear(provider.tag)
 

@@ -9,9 +9,8 @@ def get_provider(provider_name, backup_model):
     to it.
     """
     parameters = backup_model.get_provider_parameters()
-    state_database = backup_model.get_state_database()
 
     if provider_name == 'local':
-        return LocalProvider(parameters, state_database, backup_model)
+        return LocalProvider(parameters, backup_model)
     else:
         raise exceptions.ProviderNotSupportedException(provider_name)

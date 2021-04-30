@@ -7,9 +7,8 @@ def get_scanner(scanner_name, backup_model):
     Returns a scanner with the given scanner name.
     """
     parameters = backup_model.get_provider_parameters()
-    state_database = backup_model.get_state_database()
     if scanner_name == 'local':
-        scanner = local_scanner.LocalFilesScanner(parameters, state_database, backup_model)
+        scanner = local_scanner.LocalFilesScanner(parameters, backup_model)
     else:
         raise exceptions.ScannerNotSupportedException(scanner_name)
     return scanner
