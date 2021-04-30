@@ -15,7 +15,7 @@ class ProgressBar extends React.Component {
     }
 
     componentDidMount() {
-        setInterval(this.fetchCurrentStatus, 1000);
+        //setInterval(this.fetchCurrentStatus, 1000);
         //this.fetchCurrentStatus();
     }
 

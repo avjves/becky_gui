@@ -34,7 +34,8 @@ class Backup(models.Model):
         This is a helper function for scanners/providers, so that they can easily
         generate new BackupFile objects at any point. 
         """
-        backup_file = BackupFile(backup=self, path=path)
+        backup_file = BackupItem(backup=self, path=path)
+        backup_file.set_filename_and_directory()
         return backup_file
 
     def create_backup_file_instances(self, files):
@@ -44,6 +45,14 @@ class Backup(models.Model):
         """
         backup_files = [self.create_backup_file_instance(f) for f in files]
         return backup_files
+
+    def get_remote_files(self, path):
+        """
+        Retrieves all saved Backup Items in the current path.
+        """
+        files = BackupItem.objects.filter(directory=path)
+        return files
+
 
     def get_backup_provider(self):
         """
@@ -132,6 +141,10 @@ class Backup(models.Model):
         except ObjectDoesNotExist:
             pass
 
+    def get_all_backup_items(self):
+        backup_items = self.backup_items.all()
+        return backup_items
+
     def get_all_backup_files(self):
         """
         Returns all backup file paths tied to this model as a list.
@@ -181,12 +194,14 @@ class Backup(models.Model):
         logger = self._get_logger()
         logger.log("Starting file scanning...", 'BACKUP', 'INFO')
         # self.set_status('Scanning for files...')
-        scanner.scan_files(self.get_all_backup_files())
+        found_files = scanner.scan_files(self.get_all_backup_files())
         logger.log("Starting file backing...", 'BACKUP', 'INFO')
         # self.set_status('Backing up files...')
-        provider.backup_files(scanner.get_changed_files())
+        saved_files = provider.backup_files(found_files)
+        with transaction.atomic():
+            [f.save() for f in saved_files]
         logger.log("Starting file marking...", 'BACKUP', 'INFO')
-        scanner.mark_new_files()
+        # scanner.mark_new_files()
         self.set_status('Idle', 0, 0)
 
     def set_status(self, status_message, percentage, running):
@@ -215,6 +230,28 @@ class BackupFile(models.Model):
     def to_json(self):
         return {'path': self.path}
         
+
+class BackupItem(models.Model):
+    path = models.TextField(null=False)
+    backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='backup_items')
+    filename = models.TextField()
+    directory = models.TextField()
+
+    def set_filename_and_directory(self):
+        """
+        Sets the directory field to be the folder where the given item exists.
+        If the path is just root, directory is set to None.
+        """
+        if self.path == '/':
+            self.filename = '/'
+            self.directory = ''
+        else:
+            splits = self.path.rsplit('/', 1)
+            folder = splits[0] if splits[0] else '/'
+            filename = splits[1]
+            self.directory = folder
+            self.filename = filename
+
 
 class BackupStatus(models.Model):
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='statuses')

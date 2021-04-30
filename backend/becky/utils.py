@@ -14,6 +14,8 @@ def join_file_path(*args):
     Preprocesses the given values and runs them through os.path.join.
     """
     args = list(args)
+    if args[0] == '':
+        args[0] = '/'
     for i in range(1, len(args)): # First value can start with /
         args[i] = args[i].strip('/')
     return os.path.join(*args)

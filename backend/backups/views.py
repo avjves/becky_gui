@@ -231,10 +231,11 @@ class RestoreFilesView(FilesView):
 
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
+        print(path)
         backup_model = self._get_backup_model(backup_id)
-        provider = backup_model.get_backup_provider()
-        files = provider.get_remote_files(path)
-        file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
+        files = backup_model.get_remote_files(path)
+        file_objects = [self._generate_file_object(path, f.filename, backup_model) for f in files]
+        print(file_objects, path)
         return JsonResponse({'files': file_objects})
 
     def post(self, request, backup_id, **kwargs):

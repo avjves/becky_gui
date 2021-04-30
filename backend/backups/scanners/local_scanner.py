@@ -28,18 +28,6 @@ class LocalFilesScanner(BaseScanner):
             new_files = list(self.db.get(self.tag, 'new_files'))
             return new_files
 
-        def mark_new_files(self):
-            """
-            Marks new files as backed up files.
-            """
-            backed_up_files = self.db.get(self.tag, 'backed_up_files', [])
-            new_files = self.db.get(self.tag, 'new_files', [])
-            backed_up_files = backed_up_files + new_files
-            self.db.save(self.tag, 'backed_up_files', backed_up_files)
-            self.db.save(self.tag, 'new_files', [])
-            self._log('INFO', 'Marked {} files as backed up. Now {} files in total.'.format(len(new_files), len(backed_up_files)))
-
-
         def scan_files(self, backup_files):
             """
             Starts the file scanning procedure.
@@ -55,9 +43,10 @@ class LocalFilesScanner(BaseScanner):
             self.backup_model.set_status(status_message='Files found in total {}...'.format(len(scanned_files)), percentage=100, running=True)
             scanned_files = list(set(scanned_files))
             scanned_files = self.backup_model.create_backup_file_instances(scanned_files)
+            current_files = self.backup_model.get_all_backup_items()
             self._log('INFO', 'Finished file scanning.')
             self._log('INFO', 'Starting file comparisions.')
-            self._compare_scanned_files(scanned_files)
+            return self._compare_scanned_files(scanned_files, current_files)
 
         def _scan_local_files(self, backup_file):
             """
@@ -75,23 +64,24 @@ class LocalFilesScanner(BaseScanner):
                 # scanned_files = self.backup_model.create_backup_file_instances(scanned_files)
             return scanned_files
 
-        def _compare_scanned_files(self, scanned_files):
+        def _compare_scanned_files(self, scanned_files, current_files):
             """
             Compares the scanned files with the files from the database.
             For now, only checks whether there are any files that are NOT
             present in the database. Any changes to previously backed up files
             would therefore not be backed up, ever.
             """
-            files = self.db.get(self.tag, 'backed_up_files', [])
-            backed_up_paths = set([f.path for f in files])
+            # files = self.db.get(self.tag, 'backed_up_files', [])
+            backed_up_paths = set([f.path for f in current_files])
             new_files = []
             for new_file_i, new_file in enumerate(scanned_files):
                 if new_file.path not in backed_up_paths:
                     new_files.append(new_file)
                 if new_file_i % 100 == 0:
                     self.backup_model.set_status(status_message='Comparing found files with backed up files. \t {} new files have been found so far.'.format(len(new_files)), percentage=int((new_file_i / len(scanned_files))*100), running=True)
-            self.db.save(self.tag, 'new_files', new_files)
+            # self.db.save(self.tag, 'new_files', new_files)
             self._log('INFO', 'Found {} new files.'.format(len(new_files)))
+            return new_files
 
         def _log(self, level, message):
             """
