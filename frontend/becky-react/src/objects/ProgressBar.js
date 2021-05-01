@@ -38,10 +38,7 @@ class ProgressBar extends React.Component {
         return (
             <div className="card p-2 mb-3">
                 <div className="justify-content-center row">
-                    <div className="col-2">
-                        <Header size="h4"> Current status: </Header>
-                    </div>
-                    <div className="col-10">
+                    <div className="col-12">
                         <div className="d-table m-auto">
                             <span> {this.state.statusMessage} </span>
                         </div>
