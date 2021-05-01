@@ -44,11 +44,11 @@ def create_test_files(path, file_count):
     for random_file in random_files:
         is_dir = random.randint(0, 1)
         if is_dir:
-            cur_f = os.path.join(cur_f, random_file)
+            cur_f = os.path.join(cur_f, random_file + "_DIRECTORY")
             if not os.path.exists(cur_f):
                 os.mkdir(cur_f)
         else:
-            open(os.path.join(cur_f, random_file), 'w').write(random_file)
+            open(os.path.join(cur_f, random_file + "_FILE"), 'w').write(random_file)
 
 
 def path_to_folders(path):

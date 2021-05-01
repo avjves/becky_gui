@@ -64,8 +64,8 @@ CRONJOBS = [
         ('* * * * *', 'backups.cron.run_periodic_backups'),
 ]
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-NOSE_ARGS = ['--with-coverage', '--cover-package=backups']
+# TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+# NOSE_ARGS = ['--with-coverage', '--cover-package=backups']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
