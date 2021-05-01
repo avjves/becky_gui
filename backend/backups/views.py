@@ -92,7 +92,7 @@ class BackupView(View):
         Here we only return their simple JSON representation.
         That is, we only return name, is_running and the provider name.
         """
-        backups = [backup.to_simple_json() for backup in Backup.objects.all()]
+        backups = [backup.to_detailed_json() for backup in Backup.objects.all()]
         return JsonResponse({'backups': backups})
 
     def _update_backup(self, request, backup_model, backup_data):
@@ -125,6 +125,7 @@ class BackupRunnerView(View):
         try:
             backup_model.run_backup()
         except Exception as e:
+            print(e)
             backup_model.set_status('Idle due to an error', percentage=0, running=0)
             raise e
         return HttpResponse(status=200)

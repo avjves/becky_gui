@@ -23,6 +23,11 @@ class Backup(models.Model):
         file_selections = {}
         for backup_file in self.files.all():
             file_selections[backup_file.path] = True
+        size_in_bytes = 0
+        with transaction.atomic():
+            for backup_item in self.backup_items.all():
+                size_in_bytes += backup_item.file_size
+        json_output['total_size'] = round(size_in_bytes / 1024 / 1024, 2) #Size in MB
         json_output['selections'] = file_selections
 
         return json_output
@@ -34,7 +39,7 @@ class Backup(models.Model):
         generate new BackupFile objects at any point. 
         """
         backup_file = BackupItem(backup=self, path=path)
-        backup_file.set_filename_and_directory()
+        backup_file.update_metadata()
         return backup_file
 
     def create_backup_file_instances(self, files):
@@ -229,8 +234,25 @@ class BackupItem(models.Model):
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='backup_items')
     filename = models.TextField()
     directory = models.TextField()
+    file_size = models.BigIntegerField(default=0)
 
-    def set_filename_and_directory(self):
+    def update_metadata(self):
+        self._set_path_metadata()
+        self._set_file_metadata()
+
+    def _set_file_metadata(self):
+        """
+        Updates the file metadata if possible, such as 
+        file size.
+        TODO: other metadata, like modified timestamps etc.
+        """
+        if os.path.exists(self.path):
+            if os.path.isdir(self.path):
+                self.file_size = 0 #For now
+            else:
+                self.file_size = os.path.getsize(self.path)
+
+    def _set_path_metadata(self):
         """
         Sets the directory field to be the folder where the given item exists.
         If the path is just root, directory is set to None.

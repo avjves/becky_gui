@@ -29,8 +29,7 @@ class BackupListObject extends React.Component {
                     <div>
                         <span>Name: {this.props.backup.name}</span><br />
                     </div>
-                    <span>Provider: {this.props.backup.provider}</span><br />
-                    <span>Status: {this.props.backup.status}</span><br />
+                    <span>Total size: {this.props.backup.total_size}MB</span><br />
                 </div>
                 <div className="col-1 pl-1">
                     <div className="">
