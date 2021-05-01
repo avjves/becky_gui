@@ -38,23 +38,24 @@ class SingleBackupFileSelectionView extends React.Component {
     }
     
     render() {
-        var defaultValues = {
-            'path': this.props.backup.path ? this.props.backup.path : '',
-        }
         var currentSelections = Object.keys(this.props.backup.selections);
         return (
             <div>
                 <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} addFileSelection={this.addFileSelection} />
                 <hr />
-                <Typography variant="h6"> Currently saved selections: </Typography>
-                <div>
-                    {currentSelections.map((selection, index) => {
-                        return (
-                            <span key={index}>- { selection } </span>
-                        );})
-                    }
-                </div>
-                <hr />
+                {currentSelections.length > 0 && 
+                    <div>
+                        <Typography variant="h6"> Currently saved selections: </Typography>
+                        <div>
+                            {currentSelections.map((selection, index) => {
+                                return (
+                                    <span key={index}>- { selection } </span>
+                                );})
+                            }
+                        </div>
+                        <hr />
+                    </div>
+                }
                 <Button variant="contained" color='primary' type="button" onClick={this.onClickNextButton}>
                     Next
                 </Button>
