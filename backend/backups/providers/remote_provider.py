@@ -7,50 +7,54 @@ from logs.models import BackupLogger
 from becky.utils import remove_prefix, join_file_path, path_to_folders
 
 """
-A local backup provider that can backup files from one location
-to another, within a local system.
+A remote backup provider that can backup files from the local system
+to a remote server.
 """
-class LocalProvider(BaseProvider):
+class RemoteProvider(BaseProvider):
     
     def __init__(self, parameters, backup_model):
         self.parameters = parameters
         self.backup_model = backup_model
         self.logger = BackupLogger(backup_model)
-        self.tag = 'LocalBackupProvider'
+        self.tag = 'RemoteBackupProvider'
 
     def backup_files(self, list_of_files):
         """
         Receives a list of files to be backed up. 
-        TODO: Use rsync or something a bit more efficient than
-        going through files one at a time.
         """
         self._log('INFO', 'Started backing up files.')
         list_of_files.sort(key=lambda x: len(x.path)) # Sort, so folders will be created before any files are copied in.
+        remote_addr = self._get_parameter('remote_addr')
+        remote_copy_path = self._get_parameter('remote_path')
+        ssh_identity_path = self._get_parameter('ssh_id_path')
 
-        copy_path = self._get_parameter('output_path')
-        self._log('DEBUG', 'Saving files to {}'.format(copy_path))
+        self._log('DEBUG', 'Saving files to {}/{}'.format(remote_addr, remote_copy_path))
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
         self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(0, len(list_of_files)), 0, True)
-        # remote_files = self.db.get(self.tag, 'remote_files', [])
+
         saved_files = []
         for file_in_index, file_in in enumerate(list_of_files):
-            file_out = self._generate_output_path(file_in, copy_path)
-            self._copy_file(file_in, file_out)
-            # remote_files.append(file_in)
+            file_out = self._generate_output_path(file_in, remote_copy_path)
+            self._copy_file(file_in, file_out, remote_addr, ssh_identity_path)
             saved_files.append(file_in)
+
             if file_in_index % 100 == 0:
                 self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
                 self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(file_in_index, len(list_of_files)), int((file_in_index / len(list_of_files)) * 100), True)
+
         self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))
+
         return saved_files
-        # self.db.save(self.tag, 'remote_files', remote_files)
 
     def restore_files(self, selections, restore_path):
         """
         Restores selected files from the backups to the restore folder.
         """
         self._log('INFO', 'Starting file restore process.') 
-        copy_path = self._get_parameter('output_path')
+        remote_addr = self._get_parameter('remote_addr')
+        remote_copy_path = self._get_parameter('remote_path')
+        ssh_identity_path = self._get_parameter('ssh_id_path')
+
         files_to_restore = []
         for selection in selections:
             selection_files = path_to_folders(selection.path) + glob.glob(selection.path + "/**/*", recursive=True)
@@ -62,10 +66,10 @@ class LocalProvider(BaseProvider):
             selection_file = self.backup_model.create_backup_file_instance(selection_file)
             restored_file = self._generate_output_path(selection_file, restore_path)
             backup_file = self.backup_model.create_backup_file_instance(selection_file.path)
-            backup_file.path = join_file_path(copy_path, backup_file.path)
+            backup_file.path = join_file_path(remote_copy_path, backup_file.path)
             # print("selection", selection_file.path, "backup_file", backup_file.path, "restored file", restored_file.path)
             # import pdb;pdb.set_trace()
-            self._copy_file(backup_file, restored_file, create_folders=False)
+            self._copy_remote_file(backup_file, restored_file, remote_addr, ssh_identity_path)
         self._log('INFO', '{} files/folders restored.'.format(len(files_to_restore)))
 
     def _get_parameter(self, key):
@@ -75,22 +79,36 @@ class LocalProvider(BaseProvider):
         return self.parameters['providerSettings'][key]
     
 
-    def _copy_file(self, file_in, file_out, create_folders=False):
+    def _copy_file(self, file_in, file_out, remote_addr, ssh_identity_path):
         """
-        Receives a single file that should be copied to the copy folder.
-        First checks that a proper folder exists before attempting a copy.
-        If create_folders is true, creates all folders in the path.
+        Receives a single file that should be copied to the copy folder on the remote server.
+        Creates folders first by running mkdirs on the remote system.
+        Uses the ssh identity to skip password checks.
         """
-        if os.path.exists(file_out.path):
-            return
         if os.path.isdir(file_in.path):
-            os.makedirs(file_out.path)
+            os.system('ssh -i {} {} "mkdir -p {}"'.format(ssh_identity_path, remote_addr, file_out.path))
             return
-        if create_folders:
+        if False:
             folder = file_out.path.rsplit("/", 1)[0]
             if not os.path.exists(folder):
                 os.makedirs(folder)
-        copyfile(file_in.path, file_out.path)
+        os.system('scp -i {} {} {}:{} >/dev/null 2>&1'.format(ssh_identity_path, file_in.path, remote_addr, file_out.path))
+
+    def _copy_remote_file(self, file_in, file_out, remote_addr, ssh_identity_path):
+        """
+        Receives a single file that should be copied from the remote server to the current system.
+        Creates folders first by running mkdirs on the remote system.
+        Uses the ssh identity to skip password checks.
+        """
+        if os.path.isdir(file_in.path):
+            os.makedirs(file_out.path)
+            return
+        if False:
+            folder = file_out.path.rsplit("/", 1)[0]
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+        os.system('scp -i {} {}:{} {} >/dev/null 2>&1'.format(ssh_identity_path, remote_addr, file_in.path, file_out.path))
+
 
     def _generate_output_path(self, file_in, copy_path):
         """

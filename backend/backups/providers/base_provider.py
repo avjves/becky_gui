@@ -9,12 +9,6 @@ class BaseProvider(ABC):
         """
         pass
 
-    @abstractmethod
-    def get_remote_files(self, path):
-        """
-        Returns the the names of backed up files at the given path.
-        """
-        pass
 
     @abstractmethod
     def restore_files(self, selections, restore_path):

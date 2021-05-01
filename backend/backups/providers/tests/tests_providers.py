@@ -48,6 +48,25 @@ class ProviderTests(TestCase):
         backup_folder.cleanup()
 
 
+    def test_remote_provider_single_file(self):
+        backup_model = Backup(name='_test_backup', provider='remote', running=0)
+        backup_model.save()
+        backup_folder = TemporaryDirectory()
+        provider_settings = json.dumps({'remote_path': backup_folder.name, 'remote_addr': 'localhost', 'ssh_id_path': '~/.ssh/id_rsa'})
+        backup_model.add_parameter('providerSettings', provider_settings)
+        self._test_backup_model_single_file(backup_model)
+        backup_folder.cleanup()
+
+    def test_remote_provider_single_folder(self):
+        backup_model = Backup(name='_test_backup', provider='remote', running=0)
+        backup_model.save()
+        backup_folder = TemporaryDirectory()
+        provider_settings = json.dumps({'remote_path': backup_folder.name, 'remote_addr': 'localhost', 'ssh_id_path': '~/.ssh/id_rsa'})
+        backup_model.add_parameter('providerSettings', provider_settings)
+        self._test_backup_model_single_folder(backup_model)
+        backup_folder.cleanup()
+
+
 
 ##############################################################
 # Abstract tests that should be completely provider agnostic #
