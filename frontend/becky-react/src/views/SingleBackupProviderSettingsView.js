@@ -8,6 +8,7 @@ import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 
 import Header from '../objects/Header.js';
 import LocalProvider from '../providers/LocalProvider.js';
+import RemoteProvider from '../providers/RemoteProvider.js';
 
 class SingleBackupProviderSettingsView extends React.Component {
 
@@ -41,6 +42,9 @@ class SingleBackupProviderSettingsView extends React.Component {
             case 'local':
                 component = <LocalProvider changeProviderParameter={this.changeProviderSettings} defaultSettings={this.state.providerSettings}/>;
                 break
+            case 'remote':
+                component = <RemoteProvider changeProviderParameter={this.changeProviderSettings} defaultSettings={this.state.providerSettings}/>;
+                break;
             default:
                 component = '';
         }
@@ -52,7 +56,7 @@ class SingleBackupProviderSettingsView extends React.Component {
     }
 
     handleChangeProvider(event) {
-        this.setState({provider: event.target.textContent});
+        this.setState({provider: event.target.value});
     }
     
     render() {
@@ -72,6 +76,7 @@ class SingleBackupProviderSettingsView extends React.Component {
                             <Select native value={this.state.provider} onChange={this.handleChangeProvider} inputProps={{name: 'provider'}}>
                                   <option aria-label="None" value="" />
                                   <option value={'local'}>local</option>
+                                  <option value={'remote'}>remote</option>
                             </Select>
                         </FormControl>
                     </div>
