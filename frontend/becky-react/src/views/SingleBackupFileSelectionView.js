@@ -1,6 +1,7 @@
 import React from "react";
 import { Form } from 'react-bootstrap';
 import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
 import axios from 'axios';
 import FileSelectorTreeView from '../objects/FileSelectorTreeView.js';
 
@@ -40,9 +41,20 @@ class SingleBackupFileSelectionView extends React.Component {
         var defaultValues = {
             'path': this.props.backup.path ? this.props.backup.path : '',
         }
+        var currentSelections = Object.keys(this.props.backup.selections);
         return (
             <div>
                 <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} addFileSelection={this.addFileSelection} />
+                <hr />
+                <Typography variant="h6"> Currently saved selections: </Typography>
+                <div>
+                    {currentSelections.map((selection, index) => {
+                        return (
+                            <span key={index}>- { selection } </span>
+                        );})
+                    }
+                </div>
+                <hr />
                 <Button variant="contained" color='primary' type="button" onClick={this.onClickNextButton}>
                     Next
                 </Button>
