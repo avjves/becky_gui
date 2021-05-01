@@ -121,6 +121,7 @@ class Backup(models.Model):
         """
         backup_file, _ = self.files.get_or_create(backup=self, path=path)
         backup_file.save()
+        return backup_file
 
     def delete_backup_file(self, path):
         """

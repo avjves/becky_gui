@@ -85,6 +85,7 @@ class RemoteProvider(BaseProvider):
         paths = [f.path for f in files]
         files_file = tempfile.NamedTemporaryFile(mode="w")
         files_file.write('\n'.join(paths))
+        files_file.flush()
         command = 'rsync -e "ssh -i {}" --files-from {} / {}:{}'.format(ssh_identity_path, files_file.name, remote_addr, remote_path)
         os.system(command)
         files_file.close()

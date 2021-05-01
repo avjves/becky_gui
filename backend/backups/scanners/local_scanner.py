@@ -48,12 +48,10 @@ class LocalFilesScanner(BaseScanner):
             if os.path.isfile(backup_file.path): # Starting_path is not a folder, but a file
                 implicit_folders = path_to_folders(backup_file.path)
                 scanned_files = implicit_folders
-                # scanned_files = self.backup_model.create_backup_file_instances(implicit_folders)
             else:
-                scanned_files = glob.glob(backup_file.path + "/**/*", recursive=True)
+                scanned_files = self._walk_folders(backup_file.path)
                 implicit_folders = path_to_folders(backup_file.path)
                 scanned_files  = implicit_folders + scanned_files
-                # scanned_files = self.backup_model.create_backup_file_instances(scanned_files)
             return scanned_files
 
         def _compare_scanned_files(self, scanned_files, current_files):
@@ -63,7 +61,6 @@ class LocalFilesScanner(BaseScanner):
             present in the database. Any changes to previously backed up files
             would therefore not be backed up, ever.
             """
-            # files = self.db.get(self.tag, 'backed_up_files', [])
             backed_up_paths = set([f.path for f in current_files])
             new_files = []
             for new_file_i, new_file in enumerate(scanned_files):
@@ -71,7 +68,6 @@ class LocalFilesScanner(BaseScanner):
                     new_files.append(new_file)
                 if new_file_i % 100 == 0:
                     self.backup_model.set_status(status_message='Comparing found files with backed up files. \t {} new files have been found so far.'.format(len(new_files)), percentage=int((new_file_i / len(scanned_files))*100), running=True)
-            # self.db.save(self.tag, 'new_files', new_files)
             self._log('INFO', 'Found {} new files.'.format(len(new_files)))
             return new_files
 
@@ -82,3 +78,14 @@ class LocalFilesScanner(BaseScanner):
             """
             self.logger.log(message=message, level=level, tag=self.tag)
 
+
+        def _walk_folders(self, path):
+            """
+            Uses os.walk to get all files in the given path.
+            """
+            files = set()
+            for root, directories, dir_files in os.walk(path):
+                files.add(root)
+                for f in dir_files:
+                    files.add(os.path.join(root, f))
+            return list(files)
