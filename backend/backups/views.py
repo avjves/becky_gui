@@ -49,7 +49,7 @@ class BackupView(View):
         These are values that all Backup models have and are directly
         part of the model, instead of being a generic parameter value.
         """
-        for field in ['name', 'provider', 'running']:
+        for field in ['name', 'scanner', 'provider', 'running']:
             if field in backup_data:
                 setattr(backup_model, field, backup_data[field])
                 del backup_data[field]
@@ -112,8 +112,9 @@ class DeleteView(View):
     """ Simple view to used to delete a backup. """
 
     def post(self, request, backup_id):
-        backup_model = Backup.objects.get(pk=backup_id)
-        backup_model.delete()
+        with transaction.atomic():
+            backup_model = Backup.objects.get(pk=backup_id)
+            backup_model.delete()
         return HttpResponse(status=200)
 
 
@@ -122,7 +123,6 @@ class BackupRunnerView(View):
 
     def get(self, request, backup_id):
         backup_model = Backup.objects.get(pk=backup_id)
-        # backupper =  Backupper(backup_model)
         try:
             backup_model.run_backup()
         except Exception as e:

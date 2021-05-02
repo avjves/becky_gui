@@ -5,6 +5,7 @@ import {  Router, Switch, Route, Link, withRouter } from "react-router-dom";
 import SingleBackupInitialInfoView from './SingleBackupInitialInfoView.js';
 import SingleBackupFileSelectionView from './SingleBackupFileSelectionView.js';
 import SingleBackupProviderSettingsView from './SingleBackupProviderSettingsView.js';
+import SingleBackupScannerSettingsView from './SingleBackupScannerSettingsView.js';
 
 import history from '../history.js';
 
@@ -14,7 +15,7 @@ class SingleBackupView extends React.Component {
         super(props);
         this.state = {
             backup: {'id': this.props.backupId, 'provider': '', 'providerSettings': {}, 'selections': []},
-            maxViewId: 2
+            maxViewId: 3
         }
         this.updateBackup = this.updateBackup.bind(this);
         this.advanceView = this.advanceView.bind(this);
@@ -80,6 +81,9 @@ class SingleBackupView extends React.Component {
                     <SingleBackupFileSelectionView updateBackup={this.updateBackup} backup={this.state.backup}/> 
                 </Route>
                 <Route path="/backups/edit/:backupId/2">
+                    <SingleBackupScannerSettingsView updateBackup={this.updateBackup} backup={this.state.backup}/> 
+                </Route>
+                <Route path="/backups/edit/:backupId/3">
                     <SingleBackupProviderSettingsView updateBackup={this.updateBackup} backup={this.state.backup}/> 
                 </Route>
             </Switch>
