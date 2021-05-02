@@ -16,3 +16,12 @@ class BaseProvider(ABC):
         Restores selected files from the backups to the restore folder.
         """
         pass
+
+    
+    @abstractmethod
+    def verify_files(self):
+        """
+        Verifies that the backup state in the database (BackupItems in the DB) matches the actual
+        backed up files.
+        """
+        pass

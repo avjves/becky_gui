@@ -2,6 +2,7 @@ import json
 import os
 import pathlib
 import datetime
+import hashlib
 from django.db import models, transaction
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -200,10 +201,22 @@ class Backup(models.Model):
         # self.set_status('Backing up files...')
         saved_files = provider.backup_files(found_files)
         with transaction.atomic():
-            [f.save() for f in saved_files]
-        logger.log("Starting file marking...", 'BACKUP', 'INFO')
-        # scanner.mark_new_files()
+            for f in saved_files:
+                f.calculate_checksum()
+                f.save()
+        logger.log("Backup done.", 'BACKUP', 'INFO')
         self.set_status('Idle', 0, 0)
+
+    def verify_files(self):
+        """
+        Runs a verify action on the provider.
+        This checks if the local and remote data are in sync by comparing their hashes.
+        """
+        provider = self.get_backup_provider()
+        logger = self._get_logger()
+        logger.log("Starting backup verification process.", 'BACKUP', 'INFO')
+        provider.verify_files()
+        logger.log("Files verified successfully.", 'BACKUP', 'INFO')
 
     def set_status(self, status_message, percentage, running):
         """
@@ -239,6 +252,21 @@ class BackupItem(models.Model):
     directory = models.TextField()
     file_size = models.BigIntegerField(default=0)
     modified = models.TimeField(null=True)
+    checksum = models.CharField(max_length=64)
+
+    def calculate_checksum(self):
+        """
+        Calculates a MD5 checksum hash of the current file.
+        This is used to verify that the content match.
+        """
+        if os.path.isdir(self.path):
+            self.checksum = '0'
+        else:
+            content = open(self.path, 'rb').read()
+            checksum = hashlib.md5()
+            checksum.update(content)
+            self.checksum = checksum.hexdigest()
+        
 
     def update_metadata(self):
         self._set_path_metadata()

@@ -2,6 +2,8 @@ import os
 import glob
 import shelve
 from shutil import copyfile
+
+import backups.providers.exceptions as exceptions
 from backups.providers.base_provider import BaseProvider
 from logs.models import BackupLogger
 from becky.utils import remove_prefix, join_file_path, path_to_folders
@@ -67,6 +69,28 @@ class LocalProvider(BaseProvider):
             # import pdb;pdb.set_trace()
             self._copy_file(backup_file, restored_file, create_folders=False)
         self._log('INFO', '{} files/folders restored.'.format(len(files_to_restore)))
+
+
+    def verify_files(self):
+        """
+        Verifies that the the internal state of BackupItems matches the copied files on the local file system.
+        Returns true if eveything is ok, else returns False.
+        """
+        current_items = self.backup_model.get_all_backup_items()
+        copy_path = self._get_parameter('output_path')
+
+        mismatched_files = set()
+        for backup_item in current_items:
+            backup_file_path = join_file_path(copy_path, backup_item.path)
+            backup_file = self.backup_model.create_backup_file_instance(backup_file_path)
+            backup_file.calculate_checksum()
+            if backup_item.checksum != backup_file.checksum:
+                mismatched_files.add(backup_item.path)
+                # self._log('DEBUG', 'File {} failed the verification process.'.format(backup_item.path))
+        if len(mismatched_files) > 0:
+            self._log('INFO', "Found {} files that didn't pass the verification process.".format(len(mismatched_files)))
+            raise exceptions.DataVerificationFailedException(fail_count=len(mismatched_files))
+                
 
     def _get_parameter(self, key):
         """

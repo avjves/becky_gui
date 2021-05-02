@@ -2,7 +2,9 @@ import os
 import glob
 import shelve
 import tempfile
+import uuid
 from shutil import copyfile
+import backups.providers.exceptions as exceptions
 from backups.providers.base_provider import BaseProvider
 from logs.models import BackupLogger
 from becky.utils import remove_prefix, join_file_path, path_to_folders
@@ -71,11 +73,61 @@ class RemoteProvider(BaseProvider):
         self._copy_remote_files(files_to_copy, restore_path, remote_addr, remote_copy_path, ssh_identity_path)
         self._log('INFO', '{} files/folders restored.'.format(len(files_to_restore)))
 
+    def verify_files(self):
+        """
+        Verifies that the the internal state of BackupItems matches the remote files.
+        Returns true if eveything is ok, else returns False.
+        """
+        backup_items = self.backup_model.get_all_backup_items()
+        remote_copy_path = self._get_parameter('remote_path')
+        remote_paths = [join_file_path(remote_copy_path, backup_item.path) for backup_item in backup_items]
+        remote_checksums = self._get_remote_checksums(remote_paths)
+        mismatched_files = set()
+        for backup_item_i, backup_item in enumerate(backup_items):
+            if backup_item.checksum != remote_checksums.get(join_file_path(remote_copy_path, backup_item.path), '0'):
+                import pdb;pdb.set_trace()
+                mismatched_files.add(backup_item.path)
+        if len(mismatched_files) > 0:
+            raise exceptions.DataVerificationFailedException(fail_count=len(mismatched_files))
+
+
     def _get_parameter(self, key):
         """
         Returns the parameter with the given key from the backup parameters.
         """
         return self.parameters['providerSettings'][key]
+
+    def _get_remote_checksums(self, remote_paths):
+        """
+        Runs checksums on the remote server on the given paths.
+        Process:
+            1. Copies the list of files to run checksum to the server.
+            2. Runs md5sum on each file on the remote server and save results to tmp.
+            3. Copy back the results.
+        TODO: Maybe use an actual SSH client to do this without any file saving.
+        """
+        remote_addr = self._get_parameter('remote_addr')
+        remote_copy_path = self._get_parameter('remote_path')
+        ssh_identity_path = self._get_parameter('ssh_id_path')
+
+        remote_paths_file = '/tmp/{}'.format(str(uuid.uuid4()))
+        remote_checksums_file = '/tmp/{}'.format(str(uuid.uuid4()))
+        open(remote_paths_file, "w").write('\n'.join(remote_paths) + '\n')
+        command = 'scp -i {} {} {}:{} > /dev/null'.format(ssh_identity_path, remote_paths_file, remote_addr, remote_paths_file)
+        os.system(command)
+        command = "ssh -i {} {} 'while read line; do md5sum $line; done < {} > {} 2>/dev/null' > /dev/null".format(ssh_identity_path, remote_addr, remote_paths_file, remote_checksums_file)
+        os.system(command)
+        command = 'scp -i {} {}:{} {} > /dev/null'.format(ssh_identity_path, remote_addr, remote_checksums_file, remote_checksums_file)
+        os.system(command)
+        checksum_lines = open(remote_checksums_file, "r").read().split('\n')
+        checksums = {}
+        checksum_lines = [l.strip() for l in checksum_lines if l.strip()]
+        for checksum_i, checksum_line in enumerate(checksum_lines):
+            checksum = checksum_line.split(" ")[0].strip()
+            file_name = checksum_line.split(" ", 1)[1].strip()
+            checksums[file_name] = checksum
+        return checksums
+
     
     def _copy_files(self, files, remote_addr, remote_path, ssh_identity_path):
         """

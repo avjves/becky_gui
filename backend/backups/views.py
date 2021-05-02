@@ -127,7 +127,7 @@ class BackupRunnerView(View):
             backup_model.run_backup()
         except Exception as e:
             print(e)
-            backup_model.set_status('Idle due to an error', percentage=0, running=0)
+            backup_model.set_status('Idle due to an error {}'.format(e), percentage=0, running=0)
             raise e
         return HttpResponse(status=200)
 
