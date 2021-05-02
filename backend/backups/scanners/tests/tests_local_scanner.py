@@ -8,7 +8,7 @@ from becky.utils import path_to_folders, join_file_path
 class LocalScannerTests(TestCase):
 
     def setUp(self):
-        self.backup_model = Backup(name='_test_backup', provider='', running=0)
+        self.backup_model = Backup(name='_test_backup', provider='', scanner='local', running=0)
         self.backup_model.save()
         self.scanner = self.backup_model.get_file_scanner()
         pass

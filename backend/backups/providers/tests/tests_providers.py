@@ -30,7 +30,7 @@ class ProviderTests(TestCase):
         pass
 
     def test_local_provider_single_folder(self):
-        backup_model = Backup(name='_test_backup', provider='local', running=0)
+        backup_model = Backup(name='_test_backup', provider='local', scanner='local', running=0)
         backup_model.save()
         backup_folder = TemporaryDirectory()
         provider_settings = json.dumps({'output_path': backup_folder.name})
@@ -39,7 +39,7 @@ class ProviderTests(TestCase):
         backup_folder.cleanup()
         
     def test_local_provider_single_file(self):
-        backup_model = Backup(name='_test_backup', provider='local', running=0)
+        backup_model = Backup(name='_test_backup', provider='local', scanner='local', running=0)
         backup_model.save()
         backup_folder = TemporaryDirectory()
         provider_settings = json.dumps({'output_path': backup_folder.name})
@@ -49,7 +49,7 @@ class ProviderTests(TestCase):
 
 
     def test_remote_provider_single_file(self):
-        backup_model = Backup(name='_test_backup', provider='remote', running=0)
+        backup_model = Backup(name='_test_backup', provider='remote', scanner='local', running=0)
         backup_model.save()
         backup_folder = TemporaryDirectory()
         provider_settings = json.dumps({'remote_path': backup_folder.name, 'remote_addr': 'localhost', 'ssh_id_path': '~/.ssh/id_rsa'})
@@ -58,7 +58,7 @@ class ProviderTests(TestCase):
         backup_folder.cleanup()
 
     def test_remote_provider_single_folder(self):
-        backup_model = Backup(name='_test_backup', provider='remote', running=0)
+        backup_model = Backup(name='_test_backup', provider='remote', scanner='local', running=0)
         backup_model.save()
         backup_folder = TemporaryDirectory()
         provider_settings = json.dumps({'remote_path': backup_folder.name, 'remote_addr': 'localhost', 'ssh_id_path': '~/.ssh/id_rsa'})

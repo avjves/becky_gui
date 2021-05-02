@@ -1,5 +1,7 @@
 import json
 import os
+import pathlib
+import datetime
 from django.db import models, transaction
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -11,11 +13,12 @@ from becky.utils import remove_prefix
 
 class Backup(models.Model):
     name = models.CharField(max_length=128, null=False)
+    scanner = models.CharField(max_length=128, null=False)
     provider = models.CharField(max_length=128, null=False)
     running = models.BooleanField(default=False)
 
     def to_simple_json(self):
-        return {'id': self.id, 'name': self.name, 'provider': self.provider, 'running': self.running}
+        return {'id': self.id, 'name': self.name, 'scanner': self.scanner, 'provider': self.provider, 'running': self.running}
 
     def to_detailed_json(self):
         json_output = self.to_simple_json()
@@ -34,7 +37,7 @@ class Backup(models.Model):
 
     def create_backup_file_instance(self, path):
         """
-        Given a file path, creates BackupFiles from it.
+        Given a file path, creates BackupFiles from it if one doesn't already exist in the database.
         This is a helper function for scanners/providers, so that they can easily
         generate new BackupFile objects at any point. 
         """
@@ -70,7 +73,7 @@ class Backup(models.Model):
         """
         Checks the desired file scanner from the model and intializes it.
         """
-        scanner = scanners.get_scanner('local', self)
+        scanner = scanners.get_scanner(self.scanner, self)
         return scanner
 
     def get_provider_parameters(self):
@@ -134,7 +137,7 @@ class Backup(models.Model):
         If none such exists, we just return.
         """
         try:
-            bf = self.files.objects.get(path=path)
+            bf = self.files.get(path=path)
             bf.delete()
         except ObjectDoesNotExist:
             pass
@@ -235,6 +238,7 @@ class BackupItem(models.Model):
     filename = models.TextField()
     directory = models.TextField()
     file_size = models.BigIntegerField(default=0)
+    modified = models.TimeField(null=True)
 
     def update_metadata(self):
         self._set_path_metadata()
@@ -251,6 +255,10 @@ class BackupItem(models.Model):
                 self.file_size = 0 #For now
             else:
                 self.file_size = os.path.getsize(self.path)
+
+            modified = int(pathlib.Path(self.path).stat().st_mtime)
+            self.modified = datetime.datetime.fromtimestamp(modified)
+
 
     def _set_path_metadata(self):
         """
