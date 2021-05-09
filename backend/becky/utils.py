@@ -38,8 +38,11 @@ def create_test_files(path, file_count):
     File_count specifies how many files/folders will be generated
     in total.
     """
-    prefix = str(uuid.uuid4())
+    prefix = str(uuid.uuid4()).split("-")[0]
     random_files = [prefix + "_" + str(i) for i in range(0, file_count)]
+    if len(random_files) != len(set(random_files)): ## If collissions, try again
+        create_test_files(path, file_count)
+        return
     cur_f = path
     for random_file in random_files:
         is_dir = random.randint(0, 1)

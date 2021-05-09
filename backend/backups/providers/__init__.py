@@ -1,5 +1,6 @@
 from backups.providers.local_provider import LocalProvider
 from backups.providers.remote_provider import RemoteProvider
+from backups.providers.s3_provider import S3Provider
 import backups.providers.exceptions as exceptions
 
 
@@ -15,5 +16,7 @@ def get_provider(provider_name, backup_model):
         return LocalProvider(parameters, backup_model)
     elif provider_name == 'remote':
         return RemoteProvider(parameters, backup_model)
+    elif provider_name == 's3':
+        return S3Provider(parameters, backup_model)
     else:
         raise exceptions.ProviderNotSupportedException(provider_name)

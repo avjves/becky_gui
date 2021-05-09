@@ -3,6 +3,7 @@ import json
 import os
 import random
 from tempfile import TemporaryDirectory
+
 from django.test import TestCase
 
 from backups.models import Backup
@@ -89,6 +90,44 @@ class ProviderTests(TestCase):
         backup_model.verify_files()
         backup_folder.cleanup()
 
+    def _get_s3_configs(self):
+        try:
+            config = {}
+            home = os.path.expanduser('~')
+            config_lines = open("{}/.s3cfg".format(home), "r").read().split('\n')
+            for line in config_lines:
+                splits = line.split("=")
+                if len(splits) == 2:
+                    config[splits[0].strip()] = splits[1].strip()
+            return config
+        except Exception as e:
+            raise Exception('For S3 tests to work, there has to be a valid .s3cfg file in the root of the current user')
+
+
+    def test_s3_provider_single_file(self):
+        backup_model = Backup(name='_test_backup', provider='s3', scanner='local', running=0)
+        backup_model.save()
+        config = self._get_s3_configs() 
+        provider_settings = json.dumps({'access_key': config['access_key'], 'secret_key': config['secret_key'], 'host': config['host_base'], 'host_bucket': config['host_bucket'], 'bucket_name': config['bucket_name']})
+        backup_model.add_parameter('providerSettings', provider_settings)
+        self._test_backup_model_single_file(backup_model)
+
+    def test_s3_provider_single_folder(self):
+        backup_model = Backup(name='_test_backup', provider='s3', scanner='local', running=0)
+        backup_model.save()
+        config = self._get_s3_configs() 
+        provider_settings = json.dumps({'access_key': config['access_key'], 'secret_key': config['secret_key'], 'host': config['host_base'], 'host_bucket': config['host_bucket'], 'bucket_name': config['bucket_name']})
+        backup_model.add_parameter('providerSettings', provider_settings)
+        self._test_backup_model_single_folder(backup_model)
+
+    def test_s3_provider_verify_files(self):
+        backup_model = Backup(name='_test_backup', provider='s3', scanner='local', running=0)
+        backup_model.save()
+        config = self._get_s3_configs() 
+        provider_settings = json.dumps({'access_key': config['access_key'], 'secret_key': config['secret_key'], 'host': config['host_base'], 'host_bucket': config['host_bucket'], 'bucket_name': config['bucket_name']})
+        backup_model.add_parameter('providerSettings', provider_settings)
+        backup_model.run_backup()
+        backup_model.verify_files()
 
 
 ##############################################################

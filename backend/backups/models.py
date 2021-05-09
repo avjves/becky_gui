@@ -122,6 +122,17 @@ class Backup(models.Model):
         except ObjectDoesNotExist:
             return None
 
+    def get_backup_item(self, path):
+        """
+        Returns a BackupItem that matches the given path.
+        If none exists, returns None.
+        """
+        try:
+            backup_item = self.backup_items.get(path=path)
+            return backup_item
+        except ObjectDoesNotExist:
+            return None
+
     def add_backup_file(self, path):
         """
         Creates a BackupFile from the given path.
@@ -249,6 +260,7 @@ class BackupItem(models.Model):
     path = models.TextField(null=False)
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='backup_items')
     filename = models.TextField()
+    file_type = models.CharField(max_length=32)
     directory = models.TextField()
     file_size = models.BigIntegerField(default=0)
     modified = models.TimeField(null=True)
@@ -281,8 +293,10 @@ class BackupItem(models.Model):
         if os.path.exists(self.path):
             if os.path.isdir(self.path):
                 self.file_size = 0 #For now
+                self.file_type = 'directory'
             else:
                 self.file_size = os.path.getsize(self.path)
+                self.file_type = 'file'
 
             modified = int(pathlib.Path(self.path).stat().st_mtime)
             self.modified = datetime.datetime.fromtimestamp(modified)
