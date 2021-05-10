@@ -9,6 +9,7 @@ import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import Header from '../objects/Header.js';
 import LocalProvider from '../providers/LocalProvider.js';
 import RemoteProvider from '../providers/RemoteProvider.js';
+import S3Provider from '../providers/S3Provider.js';
 
 class SingleBackupProviderSettingsView extends React.Component {
 
@@ -45,6 +46,9 @@ class SingleBackupProviderSettingsView extends React.Component {
             case 'remote':
                 component = <RemoteProvider changeProviderParameter={this.changeProviderSettings} defaultSettings={this.state.providerSettings}/>;
                 break;
+            case 's3':
+                component = <S3Provider changeProviderSettings={this.changeProviderSettings} defaultSettings={this.state.providerSettings} />;
+                break;
             default:
                 component = '';
         }
@@ -75,8 +79,9 @@ class SingleBackupProviderSettingsView extends React.Component {
                             <InputLabel htmlFor="age-native-simple">Provider</InputLabel>
                             <Select native value={this.state.provider} onChange={this.handleChangeProvider} inputProps={{name: 'provider'}}>
                                   <option aria-label="None" value="" />
-                                  <option value={'local'}>local</option>
-                                  <option value={'remote'}>remote</option>
+                                  <option value={'local'}>Local</option>
+                                  <option value={'remote'}>Remote (Over SSH)</option>
+                                  <option value={'s3'}>S3 compatible object storage</option>
                             </Select>
                         </FormControl>
                     </div>
