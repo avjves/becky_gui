@@ -47,7 +47,7 @@ class SingleBackupProviderSettingsView extends React.Component {
                 component = <RemoteProvider changeProviderParameter={this.changeProviderSettings} defaultSettings={this.state.providerSettings}/>;
                 break;
             case 's3':
-                component = <S3Provider changeProviderSettings={this.changeProviderSettings} defaultSettings={this.state.providerSettings} />;
+                component = <S3Provider changeProviderParameter={this.changeProviderSettings} defaultSettings={this.state.providerSettings} />;
                 break;
             default:
                 component = '';
