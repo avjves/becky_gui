@@ -76,15 +76,18 @@ class S3Provider(BaseProvider):
         for backup_item in current_items:
             if backup_item.file_type == 'directory': continue
             backup_path = self._generate_output_path(backup_item, bucket_name)
-            result, err = self._run_command(['ls', '--list-md5', backup_path])
+            result, err = self._run_command(['ls', '--list-md5', backup_path.path])
+            matched = False
             if result.strip():
                splits = result.strip().split()
-               if backup_item.checksum != splits[3]:
-                   mismatched_files.add(backup_item.path)
+               if backup_item.checksum == splits[3]:
+                   matched = True
+            if not matched:
+                mismatched_files.add(backup_item.path)
         if len(mismatched_files) > 0:
             self._log('INFO', "Found {} files that didn't pass the verification process.".format(len(mismatched_files)))
             raise exceptions.DataVerificationFailedException(fail_count=len(mismatched_files))
-                
+        self._log('INFO', "Verified {} files.".format(len(current_items) - len(mismatched_files)))    
 
     def _get_parameter(self, key):
         """

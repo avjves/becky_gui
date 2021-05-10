@@ -90,7 +90,7 @@ class LocalProvider(BaseProvider):
         if len(mismatched_files) > 0:
             self._log('INFO', "Found {} files that didn't pass the verification process.".format(len(mismatched_files)))
             raise exceptions.DataVerificationFailedException(fail_count=len(mismatched_files))
-                
+        self._log('INFO', "Verified {} files.".format(len(current_items) - len(mismatched_files)))    
 
     def _get_parameter(self, key):
         """

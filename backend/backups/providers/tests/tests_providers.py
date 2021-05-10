@@ -56,8 +56,7 @@ class ProviderTests(TestCase):
         backup_folder = TemporaryDirectory()
         provider_settings = json.dumps({'output_path': backup_folder.name})
         backup_model.add_parameter('providerSettings', provider_settings)
-        backup_model.run_backup()
-        backup_model.verify_files()
+        self._test_backup_model_file_verification(backup_model)
         backup_folder.cleanup()
 
 ##############################################################################
@@ -86,8 +85,7 @@ class ProviderTests(TestCase):
         backup_folder = TemporaryDirectory()
         provider_settings = json.dumps({'remote_path': backup_folder.name, 'remote_addr': 'localhost', 'ssh_id_path': '~/.ssh/id_rsa'})
         backup_model.add_parameter('providerSettings', provider_settings)
-        backup_model.run_backup()
-        backup_model.verify_files()
+        self._test_backup_model_file_verification(backup_model)
         backup_folder.cleanup()
 
     def _get_s3_configs(self):
@@ -126,8 +124,7 @@ class ProviderTests(TestCase):
         config = self._get_s3_configs() 
         provider_settings = json.dumps({'access_key': config['access_key'], 'secret_key': config['secret_key'], 'host': config['host_base'], 'host_bucket': config['host_bucket'], 'bucket_name': config['bucket_name']})
         backup_model.add_parameter('providerSettings', provider_settings)
-        backup_model.run_backup()
-        backup_model.verify_files()
+        self._test_backup_model_file_verification(backup_model)
 
 
 ##############################################################
@@ -191,3 +188,15 @@ class ProviderTests(TestCase):
             restore_directory.cleanup()
         test_directory.cleanup()
 
+    def _test_backup_model_file_verification(self, backup_model):
+        """
+        Tests backing up random files and then verifying that the checksums match.
+        """
+        test_directory = TemporaryDirectory()
+        create_test_files(test_directory.name, 50)
+        generated_files = glob.glob(test_directory.name + '/**/*', recursive=True)
+        backup_model.add_backup_file(test_directory.name)
+        backup_model.run_backup()
+        verified = backup_model.verify_files()
+        self.assertTrue(verified)
+        test_directory.cleanup()

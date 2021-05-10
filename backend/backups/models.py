@@ -228,6 +228,7 @@ class Backup(models.Model):
         logger.log("Starting backup verification process.", 'BACKUP', 'INFO')
         provider.verify_files()
         logger.log("Files verified successfully.", 'BACKUP', 'INFO')
+        return True
 
     def set_status(self, status_message, percentage, running):
         """
