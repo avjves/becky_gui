@@ -11,15 +11,15 @@ from becky.utils import remove_prefix, join_file_path, path_to_folders
 
 """
 A remote backup provider that can backup files from the local system
-to a remote server.
+to a remote server in a differential fashion.
 """
-class RemoteProvider(BaseProvider):
+class DifferentialRemoteProvider(BaseProvider):
     
     def __init__(self, parameters, backup_model):
         self.parameters = parameters
         self.backup_model = backup_model
         self.logger = BackupLogger(backup_model)
-        self.tag = 'RemoteBackupProvider'
+        self.tag = 'DifferentialRemoteBackupProvider'
 
     def backup_files(self, list_of_files):
         """
@@ -40,17 +40,12 @@ class RemoteProvider(BaseProvider):
         for file_in_index, file_in in enumerate(list_of_files):
             file_out = self._generate_output_path(file_in, remote_copy_path)
             files_to_copy.append(file_in)
-            # if file_in_index % 100 == 0:
-                # self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
-                # self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(file_in_index, len(list_of_files)), int((file_in_index / len(list_of_files)) * 100), True)
 
         self._copy_files(files_to_copy, remote_addr, remote_copy_path, ssh_identity_path)
         self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))
-
         return files_to_copy
-        # return saved_files
 
-    def restore_files(self, selections, restore_path):
+    def restore_files(self, selections, restore_path, **kwargs):
         """
         Restores selected files from the backups to the restore folder.
         """
@@ -85,11 +80,24 @@ class RemoteProvider(BaseProvider):
         mismatched_files = set()
         for backup_item_i, backup_item in enumerate(backup_items):
             if backup_item.checksum != remote_checksums.get(join_file_path(remote_copy_path, backup_item.path), '0'):
-                import pdb;pdb.set_trace()
                 mismatched_files.add(backup_item.path)
         if len(mismatched_files) > 0:
             raise exceptions.DataVerificationFailedException(fail_count=len(mismatched_files))
 
+    def get_remote_files(self, path, **kwargs):
+        """
+        Returns all remote files at the given path. 
+        """
+        files = self.backup_model.backup_items.filter(directory=path)
+        return files
+
+
+
+    def _get_parameter(self, key):
+        """
+        Returns the parameter with the given key from the backup parameters.
+        """
+        return self.parameters['providerSettings'][key]
 
     def _get_remote_checksums(self, remote_paths):
         """

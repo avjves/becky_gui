@@ -1,6 +1,7 @@
 import os
 import uuid
 import random
+import hashlib
 from nose.tools import nottest
 
 def format_timestamp_gui(timestamp):
@@ -63,3 +64,18 @@ def path_to_folders(path):
         folders.append(path)
         path = path.rsplit('/', 1)[0]
     return folders
+
+
+def calculate_checksum(path):
+    """
+    Calculates a MD5 hash of the file at the given path.
+    """
+    if os.path.isdir(path):
+        return '0'
+    else:
+        content = open(path, 'rb').read()
+        checksum = hashlib.md5()
+        checksum.update(content)
+        checksum = checksum.hexdigest()
+        return checksum
+

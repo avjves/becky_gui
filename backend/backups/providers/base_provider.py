@@ -25,3 +25,11 @@ class BaseProvider(ABC):
         backed up files.
         """
         pass
+
+
+    def _get_parameter(self, key):
+        """
+        Returns the parameter with the given key from the backup parameters.
+        """
+        return self.parameters['providerSettings'][key]
+

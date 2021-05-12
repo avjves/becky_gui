@@ -11,15 +11,16 @@ from logs.models import BackupLogger
 from becky.utils import remove_prefix, join_file_path, path_to_folders
 
 """
-A provider that can backup to and from any S3 compatible object storage server.
+A provider that can backup to and from any S3 compatible object storage server in a
+differential fashion.
 """
-class S3Provider(BaseProvider):
+class DifferentialS3Provider(BaseProvider):
     
     def __init__(self, parameters, backup_model):
         self.parameters = parameters
         self.backup_model = backup_model
         self.logger = BackupLogger(backup_model)
-        self.tag = 'S3Provider'
+        self.tag = 'DifferentialS3Provider'
 
     def backup_files(self, list_of_files):
         """
@@ -27,9 +28,7 @@ class S3Provider(BaseProvider):
         TODO: Use rsync or something a bit more efficient than
         going through files one at a time.
         """
-        list_of_files.sort(key=lambda x: len(x.path)) # Sort, so folders will be created before any files are copied in.
         self._log('INFO', 'Started backing up files.')
-
         bucket_name = self._get_parameter('bucket_name')
         self._log('DEBUG', 'Saving files to bucket {}'.format(bucket_name))
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
@@ -45,24 +44,20 @@ class S3Provider(BaseProvider):
         self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))
         return saved_files
 
-    def restore_files(self, selections, restore_path):
+    def restore_files(self, files_to_restore, restore_path, **kwargs):
         """
         Restores selected files from the backups to the restore folder.
         """
         self._log('INFO', 'Starting file restore process.') 
         bucket_name = self._get_parameter('bucket_name')
-        files_to_restore = []
-        for selection in selections:
-            selection_files = path_to_folders(selection.path) + glob.glob(selection.path + "/**/*", recursive=True)
-            files_to_restore += selection_files
         self._log('INFO', '{} files/folders to restore.'.format(len(files_to_restore)))
-        files_to_restore = list(set(files_to_restore))
-        files_to_restore.sort(key=len)
+        restored_files = []
         for selection_file in files_to_restore:
-            backup_file = self.backup_model.get_backup_item(selection_file)
-            restored_file = self.backup_model.create_backup_file_instance(join_file_path(restore_path, selection_file))
-            self._restore_file(backup_file, restored_file, bucket_name)
+            restored_file = self.backup_model.create_backup_file_instance(join_file_path(restore_path, selection_file.path))
+            self._restore_file(selection_file, restored_file, bucket_name)
+            restored_files.append(restored_file)
         self._log('INFO', '{} files/folders restored.'.format(len(files_to_restore)))
+        return restored_files
 
 
     def verify_files(self):
@@ -89,6 +84,8 @@ class S3Provider(BaseProvider):
             raise exceptions.DataVerificationFailedException(fail_count=len(mismatched_files))
         self._log('INFO', "Verified {} files.".format(len(current_items) - len(mismatched_files)))    
 
+
+        
     def _copy_file(self, file_in, file_out, create_folders=False):
         """
         Receives a single file that should be copied to the s3 object storage server.
@@ -99,7 +96,7 @@ class S3Provider(BaseProvider):
             result, err = self._run_command(['ls', file_out.path])
             if result.strip(): # If we get any result from this LS command, said file already exists.
                 return
-        if os.path.isdir(file_in.path): # No need to copy files on s3 
+        if os.path.isdir(file_in.path): # No need to copy folders on s3 
             return
         result, err = self._run_command(['put', file_in.path, file_out.path])
 
@@ -132,7 +129,6 @@ class S3Provider(BaseProvider):
         Generates an output path by concatenating copy_path and file_in.
         """
         file_out =  join_file_path('s3://', bucket_name, file_in.path)
-        # self._log('DEBUG', 'Output path for {} is {}'.format(file_in.path, file_out))
         return self.backup_model.create_backup_file_instance(file_out)
 
     def _log(self, level, message):

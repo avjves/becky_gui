@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.timezone import make_aware
 
 from backups.scanners.base_scanner import BaseScanner
+from backups.models import DifferentialInformation
 from logs.models import BackupLogger
 from becky.utils import remove_prefix, path_to_folders
 
@@ -18,13 +19,6 @@ has changed since previous scan will be flagged for
 copying.
 """
 
-class DifferentialInformation(models.Model):
-    backup = models.ForeignKey('backups.Backup', on_delete=models.CASCADE, null=True)
-    path = models.TextField(null=False)
-    modified = models.DateTimeField(null=False)
-    diff_creation = models.TimeField(auto_now=True)
-    order = models.IntegerField(null=False)
-
 class LocalDifferentialScanner(BaseScanner):
     
         def __init__(self, parameters, backup_model):
@@ -33,7 +27,7 @@ class LocalDifferentialScanner(BaseScanner):
             self.backup_model = backup_model
             self.tag = 'LocalDifferentialScanner'
 
-        def scan_files(self, backup_files):
+        def scan_files(self, backup_files, current_timestamp):
             """
             Starts the file scanning procedure.
             Looks at the path from the parameters to see where 
@@ -50,7 +44,7 @@ class LocalDifferentialScanner(BaseScanner):
             scanned_files = list(set(scanned_files))
             diff_info = self._get_differential_information(scanned_files)
             self.backup_model.set_status(status_message='Files found in total {}...'.format(len(scanned_files)), percentage=100, running=True)
-            scanned_files = self.backup_model.create_backup_file_instances(scanned_files)
+            scanned_files = self.backup_model.create_backup_file_instances(scanned_files, current_timestamp)
             current_files = self.backup_model.get_all_backup_items()
             self._log('INFO', 'Finished file scanning.')
             self._log('INFO', 'Starting file comparisions.')
@@ -60,13 +54,13 @@ class LocalDifferentialScanner(BaseScanner):
         def _get_differential_information(self, files):
             diffs = []
             for f in files:
-                found_diffs = list(DifferentialInformation.objects.filter(backup=self.backup_model, path=f).order_by('order'))
+                found_diff, created = DifferentialInformation.objects.get_or_create(backup=self.backup_model, path=f)
                 current_modified = int(os.path.getmtime(f))
                 current_modified = make_aware(datetime.datetime.fromtimestamp(current_modified))
-                current_diff = DifferentialInformation(backup=self.backup_model, path=f, modified=current_modified, order=len(found_diffs))
-                current_diff.save()
-                found_diffs.append(current_diff)
-                diffs.append(found_diffs)
+                found_diff.previous_modified = found_diff.current_modified
+                found_diff.current_modified = current_modified
+                found_diff.save()
+                diffs.append(found_diff)
             return diffs
 
         def _scan_local_files(self, backup_file):
@@ -75,12 +69,10 @@ class LocalDifferentialScanner(BaseScanner):
             TODO: What if the the glob output becomes massive?
             """
             if os.path.isfile(backup_file.path): # Starting_path is not a folder, but a file
-                implicit_folders = path_to_folders(backup_file.path)
-                scanned_files = implicit_folders
+                scanned_files = [backup_file.path]
             else:
                 scanned_files = self._walk_folders(backup_file.path)
-                implicit_folders = path_to_folders(backup_file.path)
-                scanned_files  = implicit_folders + scanned_files
+                scanned_files  = scanned_files
             return scanned_files
 
         def _compare_scanned_files(self, scanned_files, diff_info):
@@ -90,13 +82,11 @@ class LocalDifferentialScanner(BaseScanner):
             and thus would require re-backing up.
             """
             new_files = []
-            for i, diffs in enumerate(diff_info):
-                if len(diffs) == 1: # First time this file has been seen.
+            for i, diff in enumerate(diff_info):
+                if diff.previous_modified == None: # First time seeing this file
                     new_files.append(scanned_files[i])
                 else:
-                    current_diff = diffs[-1]
-                    last_diff = diffs[-2]
-                    if current_diff.modified != last_diff.modified:
+                    if diff.previous_modified != diff.current_modified:
                         new_files.append(scanned_files[i])
                 if i % 100 == 0:
                     self.backup_model.set_status(status_message='Comparing found files with backed up files. \t {} new files have been found so far.'.format(len(new_files)), percentage=int((i / len(scanned_files))*100), running=True)
@@ -117,7 +107,6 @@ class LocalDifferentialScanner(BaseScanner):
             """
             files = set()
             for root, directories, dir_files in os.walk(path):
-                files.add(root)
                 for f in dir_files:
                     files.add(os.path.join(root, f))
             return list(files)

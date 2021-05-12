@@ -3,14 +3,15 @@ import os
 import pathlib
 import datetime
 import hashlib
+import uuid
 from django.db import models, transaction
+from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
-import backups.providers as providers
-import backups.scanners as scanners
 from settings.models import GlobalParameter
 from logs.models import BackupLogger
-from becky.utils import remove_prefix
+from becky.utils import remove_prefix, calculate_checksum
+import backups
 
 class Backup(models.Model):
     name = models.CharField(max_length=128, null=False)
@@ -36,45 +37,48 @@ class Backup(models.Model):
 
         return json_output
 
-    def create_backup_file_instance(self, path):
+    def create_backup_file_instance(self, path, creation_time=None):
         """
         Given a file path, creates BackupFiles from it if one doesn't already exist in the database.
         This is a helper function for scanners/providers, so that they can easily
         generate new BackupFile objects at any point. 
+        Can be given a creation time, otherwise uses the current time as the creation time.
         """
-        backup_file = BackupItem(backup=self, path=path)
+        backup_file = BackupItem(backup=self, path=path, creation_time=creation_time)
         backup_file.update_metadata()
         return backup_file
 
-    def create_backup_file_instances(self, files):
+    def create_backup_file_instances(self, files, creation_time=None):
         """
         Calls 'create_backup_file_instances' for each file given in
         and returns the values as a list.
+        Can be given a creation time, otherwise uses the current time as the creation time.
         """
-        backup_files = [self.create_backup_file_instance(f) for f in files]
+        if not creation_time:
+            creation_time = timezone.now()
+        backup_files = [self.create_backup_file_instance(f, creation_time) for f in files]
         return backup_files
 
     def get_remote_files(self, path):
         """
         Retrieves all saved Backup Items in the current path.
         """
-        files = BackupItem.objects.filter(directory=path)
+        files = self.backup_items.filter(directory=path)
         return files
-
 
     def get_backup_provider(self):
         """
         Checks the desired backup provider from the model and intializes a proper 
         backup provider model.
         """
-        provider = providers.get_provider(self.provider, self)
+        provider = backups.providers.get_provider(self.provider, self)
         return provider
 
     def get_file_scanner(self):
         """
         Checks the desired file scanner from the model and intializes it.
         """
-        scanner = scanners.get_scanner(self.scanner, self)
+        scanner = backups.scanners.get_scanner(self.scanner, self)
         return scanner
 
     def get_provider_parameters(self):
@@ -186,15 +190,21 @@ class Backup(models.Model):
         else:
             return True
 
-    def restore_files(self, selections, restore_path):
+    def restore_files(self, selections, restore_path, timestamp):
         """
         Sends the selections and restore path to this backup model's 
         BackupProvider that will then restore the selected files to
         the restore_path folder.
         """
-        selections = self.create_backup_file_instances(selections)
+        selection_items = []
+        for selection in selections:
+            items = list(self.backup_items.filter(directory__startswith=selection, creation_time__lte=timestamp))
+            items += list(self.backup_items.filter(path=selection, creation_time__lte=timestamp))
+            selection_items += items
         provider = self.get_backup_provider()
-        provider.restore_files(selections, restore_path)
+        restored_files = provider.restore_files(selection_items, restore_path)
+        return restored_files
+
 
     def run_backup(self):
         """
@@ -202,14 +212,13 @@ class Backup(models.Model):
         it first generates the database and then backups everything.
         On subsequent runs it just scans for new/changed files and backups those.
         """
+        current_timestamp = timezone.now()
         scanner = self.get_file_scanner()
         provider = self.get_backup_provider()
         logger = self._get_logger()
         logger.log("Starting file scanning...", 'BACKUP', 'INFO')
-        # self.set_status('Scanning for files...')
-        found_files = scanner.scan_files(self.get_all_backup_files())
+        found_files = scanner.scan_files(self.get_all_backup_files(), current_timestamp)
         logger.log("Starting file backing...", 'BACKUP', 'INFO')
-        # self.set_status('Backing up files...')
         saved_files = provider.backup_files(found_files)
         with transaction.atomic():
             for f in saved_files:
@@ -217,6 +226,12 @@ class Backup(models.Model):
                 f.save()
         logger.log("Backup done.", 'BACKUP', 'INFO')
         self.set_status('Idle', 0, 0)
+        backup_info = {
+                'timestamp' : current_timestamp, 
+                'new_files': found_files,
+                'status': 'success'
+        }
+        return backup_info
 
     def verify_files(self):
         """
@@ -261,24 +276,28 @@ class BackupItem(models.Model):
     path = models.TextField(null=False)
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='backup_items')
     filename = models.TextField()
+    savename = models.TextField()
     file_type = models.CharField(max_length=32)
     directory = models.TextField()
     file_size = models.BigIntegerField(default=0)
     modified = models.TimeField(null=True)
     checksum = models.CharField(max_length=64)
+    creation_time = models.DateTimeField()
 
     def calculate_checksum(self):
         """
         Calculates a MD5 checksum hash of the current file.
         This is used to verify that the content match.
         """
-        if os.path.isdir(self.path):
-            self.checksum = '0'
-        else:
-            content = open(self.path, 'rb').read()
-            checksum = hashlib.md5()
-            checksum.update(content)
-            self.checksum = checksum.hexdigest()
+        self.checksum = calculate_checksum(self.path)
+
+    def _get_filename_key(self):
+        """
+        Returns the filename key of this file.
+        Filename key is a unique identifier from this path at its creation time.
+        """
+        return str(uuid.uuid4())
+    
         
 
     def update_metadata(self):
@@ -301,7 +320,9 @@ class BackupItem(models.Model):
 
             modified = int(pathlib.Path(self.path).stat().st_mtime)
             self.modified = datetime.datetime.fromtimestamp(modified)
-
+        if not self.creation_time:
+            self.creation_time = timezone.now()
+        self.savename = self._get_filename_key()
 
     def _set_path_metadata(self):
         """
@@ -318,6 +339,11 @@ class BackupItem(models.Model):
             self.directory = folder
             self.filename = filename
 
+class DifferentialInformation(models.Model):
+    backup = models.ForeignKey('backups.Backup', on_delete=models.CASCADE, null=True)
+    path = models.TextField(null=False)
+    previous_modified = models.DateTimeField(null=True)
+    current_modified = models.DateTimeField(null=True)
 
 class BackupStatus(models.Model):
     backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='statuses')
