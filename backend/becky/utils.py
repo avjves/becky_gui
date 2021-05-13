@@ -2,6 +2,8 @@ import os
 import uuid
 import random
 import hashlib
+import datetime
+from django.utils.timezone import make_aware
 from nose.tools import nottest
 
 def format_timestamp_gui(timestamp):
@@ -78,4 +80,14 @@ def calculate_checksum(path):
         checksum.update(content)
         checksum = checksum.hexdigest()
         return checksum
+
+def unix_timestamp_to_dt(timestamp):
+    """
+    Turns a unix timestamp into a django aware datetime object.
+    """
+
+    timestamp, microseconds = timestamp.split(".")
+    backup_timestamp = make_aware(datetime.datetime.fromtimestamp(int(timestamp)))
+    backup_timestamp = backup_timestamp.replace(microsecond=int(microseconds))
+    return backup_timestamp
 

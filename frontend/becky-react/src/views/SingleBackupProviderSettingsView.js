@@ -40,13 +40,13 @@ class SingleBackupProviderSettingsView extends React.Component {
     getProviderConfigComponent() {
         var component = '';
         switch(this.state.provider) {
-            case 'local':
+            case 'local+differential':
                 component = <LocalProvider changeProviderParameter={this.changeProviderSettings} defaultSettings={this.state.providerSettings}/>;
                 break
-            case 'remote':
+            case 'remote+differential':
                 component = <RemoteProvider changeProviderParameter={this.changeProviderSettings} defaultSettings={this.state.providerSettings}/>;
                 break;
-            case 's3':
+            case 's3+differential':
                 component = <S3Provider changeProviderParameter={this.changeProviderSettings} defaultSettings={this.state.providerSettings} />;
                 break;
             default:
@@ -79,9 +79,9 @@ class SingleBackupProviderSettingsView extends React.Component {
                             <InputLabel htmlFor="age-native-simple">Provider</InputLabel>
                             <Select native value={this.state.provider} onChange={this.handleChangeProvider} inputProps={{name: 'provider'}}>
                                   <option aria-label="None" value="" />
-                                  <option value={'local'}>Local</option>
-                                  <option value={'remote'}>Remote (Over SSH)</option>
-                                  <option value={'s3'}>S3 compatible object storage</option>
+                                  <option value={'local+differential'}>Local</option>
+                                  <option value={'remote+differential'}>Remote (Over SSH)</option>
+                                  <option value={'s3+differential'}>S3 compatible object storage</option>
                             </Select>
                         </FormControl>
                     </div>

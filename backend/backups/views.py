@@ -1,4 +1,5 @@
 import json
+import datetime
 import os
 
 from django.shortcuts import render
@@ -11,7 +12,7 @@ from django.views.generic.base import View
 
 from backups.models import Backup, BackupFile
 from backups.backupper import Backupper
-from becky.utils import join_file_path
+from becky.utils import join_file_path, unix_timestamp_to_dt
 from settings.models import GlobalParameter
 from logs.models import BackupLogger
 
@@ -159,7 +160,7 @@ class LogsView(View):
 
 
 class FilesView(View):
-    """ Allows the UI to query found files at a certain path. Automatically adds the user defined root to all requests. """
+    """ Allows the UI to query found files at a certain path. """
 
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
@@ -233,21 +234,38 @@ class RestoreFilesView(FilesView):
 
     def get(self, request, backup_id, **kwargs):
         path = request.GET.get('path')
-        print(path)
+        backup_timestamp = request.GET.get('backup_timestamp')
+        backup_timestamp = unix_timestamp_to_dt(backup_timestamp)
         backup_model = self._get_backup_model(backup_id)
-        files = backup_model.get_remote_files(path)
-        file_objects = [self._generate_file_object(path, f.filename, backup_model) for f in files]
-        print(file_objects, path)
-        return JsonResponse({'files': file_objects})
+        files, directories = backup_model.get_remote_files(path, backup_timestamp)
+        file_objects = [self._generate_file_object(path, f, backup_model, 'file') for f in files]
+        directory_objects = [self._generate_file_object(path, f, backup_model, 'directory') for f in directories]
+        print(directory_objects)
+        return JsonResponse({'files': file_objects + directory_objects})
 
     def post(self, request, backup_id, **kwargs):
         data = json.loads(request.body)
         selections = data['selections']
         selections = list(selections.keys())
         restore_path = data['restore_path']
+        timestamp = unix_timestamp_to_dt(data['backup_timestamp'])
         backup_model = self._get_backup_model(backup_id)
-        backup_model.restore_files(selections, restore_path)
+        backup_model.restore_files(selections, restore_path, timestamp)
         return HttpResponse(status=200)
+
+
+    def _generate_file_object(self, directory, filename, backup_model, file_type):
+        """
+        Given a path, creates a file object.
+        TODO: Check if said file is selected for backups.
+        """
+        level = self._calculate_directory_level(join_file_path(directory, filename))
+        obj = {'filename': filename, 'selected': False, 'directory': directory, 'level': level}
+        obj['selected'] = self._check_file_selection(directory, filename, backup_model)
+        obj['file_type'] = file_type
+        if file_type == 'directory':
+            obj['files'] = []
+        return obj
 
 
     def _check_file_selection(self, directory, filename, backup_model):

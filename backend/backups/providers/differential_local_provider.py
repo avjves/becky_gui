@@ -31,6 +31,8 @@ class DifferentialLocalProvider(BaseProvider):
         self._log('INFO', 'Files sorted, starting backing up {} files.'.format(len(list_of_files)))
 
         copy_path = self._get_parameter('output_path')
+        if not os.path.exists(copy_path):
+            os.makedirs(copy_path)
         self._log('DEBUG', 'Saving files to {}'.format(copy_path))
         self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(0, len(list_of_files)), 0, True)
         saved_files = []
@@ -98,16 +100,6 @@ class DifferentialLocalProvider(BaseProvider):
             self._log('INFO', "Found {} files that didn't pass the verification process.".format(len(mismatched_files)))
             raise exceptions.DataVerificationFailedException(fail_count=len(mismatched_files))
         self._log('INFO', "Found {} files that passed verification process.".format(len(matched_files)))
-
-    def get_remote_files(self, path, **kwargs):
-        """
-        Returns all files at the given path. 
-        Assumes that the a timestamp is included in the kwargs 
-        that tells the current backup iteration.
-        """
-        timestamp = kwargs.get('timestamp')
-        files = self.backup_model.backup_items.filter(directory=path, differential_information__round_timestamp=timestamp)
-        return files
 
     def _get_parameter(self, key):
         """

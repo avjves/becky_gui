@@ -34,7 +34,7 @@ class Backup(models.Model):
                 size_in_bytes += backup_item.file_size
         json_output['total_size'] = round(size_in_bytes / 1024 / 1024, 2) #Size in MB
         json_output['selections'] = file_selections
-
+        json_output['timestamps'] = self.get_backup_timestamps()
         return json_output
 
     def create_backup_file_instance(self, path, creation_time=None):
@@ -59,12 +59,29 @@ class Backup(models.Model):
         backup_files = [self.create_backup_file_instance(f, creation_time) for f in files]
         return backup_files
 
-    def get_remote_files(self, path):
+    def get_remote_files(self, path, timestamp):
         """
-        Retrieves all saved Backup Items in the current path.
+        Retrieves all filenames / directories in the current path.
         """
-        files = self.backup_items.filter(directory=path)
-        return files
+        match_files = self.backup_items.filter(directory=path, creation_time__lte=timestamp)
+        starts_with_files = self.backup_items.filter(directory__startswith=path, creation_time__lte=timestamp)
+        directories = set()
+        if len(starts_with_files) > len(match_files): 
+            for f in starts_with_files:
+                directory = f.directory.split(path, 1)[1].strip('/').split('/', 1)[0]
+                if directory:
+                    directories.add(directory)
+        return [f.filename for f in match_files], list(directories)
+
+    def get_backup_timestamps(self):
+        """
+        Returns a list of timestamps that depict when the backups were ran.
+        This can be used by the user to select different versions of the data
+        to restore.
+        """
+        timestamps = self.metadata.filter(key='backup_timestamp')
+        timestamps = [t.value for t in timestamps]
+        return timestamps
 
     def get_backup_provider(self):
         """
@@ -231,6 +248,7 @@ class Backup(models.Model):
                 'new_files': found_files,
                 'status': 'success'
         }
+        BackupMetadata(backup=self, key='backup_timestamp', value=current_timestamp.timestamp()).save() # Saving a metadata row of when this backup iteration was ran.
         return backup_info
 
     def verify_files(self):
@@ -354,8 +372,16 @@ class BackupStatus(models.Model):
     def to_json(self):
         return {'status_message': self.message, 'percentage': self.percentage, 'running': self.running}
 
-class BackupParameter(models.Model):
-    backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='parameters')
+
+class BackupMetadata(models.Model):
+    """ These are arbitrary metadata infos that the backup can save, f.ex.  timestamps """
+    backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='metadata')
     key = models.CharField(max_length=64, null=False)
     value = models.CharField(max_length=1024, null=False)
 
+class BackupParameter(models.Model):
+    """ These are parameters given by the user. """
+    backup = models.ForeignKey(Backup, on_delete=models.CASCADE, related_name='parameters')
+    key = models.CharField(max_length=64, null=False)
+    value = models.CharField(max_length=1024, null=False)
+    key = models.CharField(max_length=64, null=False)
