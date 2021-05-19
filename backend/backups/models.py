@@ -213,11 +213,23 @@ class Backup(models.Model):
         BackupProvider that will then restore the selected files to
         the restore_path folder.
         """
+
+        # Selecting exact match files AND older files
         selection_items = []
         for selection in selections:
             items = list(self.backup_items.filter(directory__startswith=selection, creation_time__lte=timestamp))
             items += list(self.backup_items.filter(path=selection, creation_time__lte=timestamp))
             selection_items += items
+
+        # Removing any older version of a file if a newer one is present
+        newest_items = {}
+        newest_item_ts = {}
+        for item in selection_items:
+            if item.path not in newest_items or item.creation_time > newest_item_ts.get(item.path, 0):
+                newest_items[item.path] = item
+                newest_item_ts[item.path] = item.creation_time
+        selection_items = list(newest_items.values())
+        
         provider = self.get_backup_provider()
         restored_files = provider.restore_files(selection_items, restore_path)
         return restored_files

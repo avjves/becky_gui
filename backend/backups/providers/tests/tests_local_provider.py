@@ -6,7 +6,7 @@ import backups.providers.tests.generic_tests as generic_tests
 
 class LocalProviderTests(TestCase):
     def setUp(self):
-        self.generic_tests = generic_tests.ProviderTests()
+        self.generic_tests = generic_tests.GenericTests()
         pass
 
     def tearDown(self):
