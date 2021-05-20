@@ -69,9 +69,9 @@ class LocalDifferentialScanner(BaseScanner):
             TODO: What if the the glob output becomes massive?
             """
             if os.path.isfile(backup_file.path): # Starting_path is not a folder, but a file
-                scanned_files = [backup_file.path]
+                scanned_files = path_to_folders(backup_file.path) + [backup_file.path]
             else:
-                scanned_files = self._walk_folders(backup_file.path)
+                scanned_files = path_to_folders(backup_file.path) + self._walk_folders(backup_file.path)
                 scanned_files  = scanned_files
             return scanned_files
 
@@ -107,6 +107,7 @@ class LocalDifferentialScanner(BaseScanner):
             """
             files = set()
             for root, directories, dir_files in os.walk(path):
+                files.add(root)
                 for f in dir_files:
                     files.add(os.path.join(root, f))
             return list(files)

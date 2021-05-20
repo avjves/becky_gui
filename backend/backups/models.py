@@ -63,15 +63,27 @@ class Backup(models.Model):
         """
         Retrieves all filenames / directories in the current path.
         """
-        match_files = self.backup_items.filter(directory=path, creation_time__lte=timestamp)
-        starts_with_files = self.backup_items.filter(directory__startswith=path, creation_time__lte=timestamp)
-        directories = set()
-        if len(starts_with_files) > len(match_files): 
-            for f in starts_with_files:
-                directory = f.directory.split(path, 1)[1].strip('/').split('/', 1)[0]
-                if directory:
-                    directories.add(directory)
-        return [f.filename for f in match_files], list(directories)
+        match_files = self.backup_items.filter(directory=path, creation_time__lte=timestamp, file_type='file')
+        match_folders = self.backup_items.filter(directory=path, creation_time__lte=timestamp, file_type='directory')
+
+        # Removing any older version of a file if a newer one is present
+        newest_items = {}
+        newest_item_ts = {}
+        for item in match_files:
+            if item.path not in newest_items or item.creation_time > newest_item_ts.get(item.path, 0):
+                newest_items[item.path] = item
+                newest_item_ts[item.path] = item.creation_time
+        match_files = list(newest_items.values())
+
+        newest_items = {}
+        newest_item_ts = {}
+        for item in match_folders:
+            if item.path not in newest_items or item.creation_time > newest_item_ts.get(item.path, 0):
+                newest_items[item.path] = item
+                newest_item_ts[item.path] = item.creation_time
+        match_folders = list(newest_items.values())
+
+        return [f.filename for f in match_files], [f.filename for f in match_folders]
 
     def get_backup_timestamps(self):
         """

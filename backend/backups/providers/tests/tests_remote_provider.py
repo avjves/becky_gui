@@ -2,11 +2,11 @@ import json
 from tempfile import TemporaryDirectory
 from django.test import TestCase
 from backups.models import Backup
-import backups.providers.tests.generic_tests as generic_tests
+from backups.providers.tests.agnostic_tests import AgnosticTests
 
 class RemoteProviderTests(TestCase):
     def setUp(self):
-        self.generic_tests = generic_tests.GenericTests()
+        self.generic_tests = AgnosticTests()
         pass
 
     def tearDown(self):

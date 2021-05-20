@@ -38,8 +38,9 @@ class DifferentialRemoteProvider(BaseProvider):
         saved_files = []
         files_to_copy = []
         for file_in_index, file_in in enumerate(list_of_files):
-            file_out = self._generate_output_path(file_in, remote_copy_path)
             files_to_copy.append(file_in)
+            if file_in.file_type == 'directory': continue # We don't save directories
+            file_out = self._generate_output_path(file_in, remote_copy_path)
 
         self._copy_files(files_to_copy, remote_addr, remote_copy_path, ssh_identity_path)
         self._log('INFO', '{} new files backed up.'.format(len(list_of_files)))

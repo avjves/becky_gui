@@ -44,7 +44,7 @@ class LocalDifferentialScannerTests(TestCase):
         backup_file = self.backup_model.add_backup_file(folder_to_scan.name)
         found_files = self.scanner.scan_files([backup_file], current_timestamp)
         found_files_paths = [f.path for f in found_files]
-        self.assertSetEqual(set(found_files_paths), set(hidden_files))
+        self.assertSetEqual(set(found_files_paths), set(path_to_folders(hidden_folder) + hidden_files))
         
 
     def test_scan_differential_files(self):

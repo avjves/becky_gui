@@ -35,9 +35,10 @@ class DifferentialS3Provider(BaseProvider):
         self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(0, len(list_of_files)), 0, True)
         saved_files = []
         for file_in_index, file_in in enumerate(list_of_files):
+            saved_files.append(file_in)
+            if file_in.file_type == 'directories': continue # We don't save directories
             file_out = self._generate_output_path(file_in, bucket_name)
             self._copy_file(file_in, file_out)
-            saved_files.append(file_in)
             if file_in_index % 100 == 0:
                 self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
                 self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(file_in_index, len(list_of_files)), int((file_in_index / len(list_of_files)) * 100), True)
@@ -53,6 +54,7 @@ class DifferentialS3Provider(BaseProvider):
         self._log('INFO', '{} files/folders to restore.'.format(len(files_to_restore)))
         restored_files = []
         for selection_file in files_to_restore:
+            if selection_file.file_type == 'directory': continue
             restored_file = self.backup_model.create_backup_file_instance(join_file_path(restore_path, selection_file.path))
             self._restore_file(selection_file, restored_file, bucket_name)
             restored_files.append(restored_file)

@@ -37,11 +37,11 @@ class DifferentialLocalProvider(BaseProvider):
         self.backup_model.set_status('Starting to copy files. \t Files copied so far {}/{}'.format(0, len(list_of_files)), 0, True)
         saved_files = []
         for file_in_index, file_in in enumerate(list_of_files):
+            saved_files.append(file_in)
             if os.path.isdir(file_in.path): continue
 
             file_out = self._generate_output_path(file_in, copy_path)
             self._copy_file(file_in, file_out)
-            saved_files.append(file_in)
 
             if file_in_index % 100 == 0:
                 self._log('DEBUG', '{} new files backed up.'.format(file_in_index))
@@ -59,6 +59,7 @@ class DifferentialLocalProvider(BaseProvider):
         self._log('INFO', '{} files/folders to restore.'.format(len(files_to_restore)))
         restored_files = []
         for selection_item in files_to_restore:
+            if selection_item.file_type == 'directory': continue
             selection_item_path = join_file_path(copy_path, selection_item.savename)
             restored_file_path = join_file_path(restore_path, selection_item.path)
             self._restore_file(selection_item_path, restored_file_path)
@@ -89,6 +90,7 @@ class DifferentialLocalProvider(BaseProvider):
         mismatched_files = set()
         matched_files = set()
         for backup_item in current_items:
+            if backup_item.file_type == 'directory': continue
             backup_file_path = join_file_path(copy_path, backup_item.savename)
             backup_file_checksum = calculate_checksum(backup_file_path)
             if backup_item.checksum != backup_file_checksum:

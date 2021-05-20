@@ -1,5 +1,6 @@
 import json
 import datetime
+import natsort
 import os
 
 from django.shortcuts import render
@@ -240,7 +241,8 @@ class RestoreFilesView(FilesView):
         files, directories = backup_model.get_remote_files(path, backup_timestamp)
         file_objects = [self._generate_file_object(path, f, backup_model, 'file') for f in files]
         directory_objects = [self._generate_file_object(path, f, backup_model, 'directory') for f in directories]
-        print(directory_objects)
+        objects = file_objects + directory_objects
+        objects = natsort.natsorted(objects, key=lambda x: x['filename'])
         return JsonResponse({'files': file_objects + directory_objects})
 
     def post(self, request, backup_id, **kwargs):
