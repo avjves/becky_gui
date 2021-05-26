@@ -68,11 +68,13 @@ class LocalDifferentialScanner(BaseScanner):
             Uses glob to recursively find all files from the starting_path.
             TODO: What if the the glob output becomes massive?
             """
+            if not os.path.exists(backup_file.path):
+                return []
             if os.path.isfile(backup_file.path): # Starting_path is not a folder, but a file
                 scanned_files = path_to_folders(backup_file.path) + [backup_file.path]
             else:
                 scanned_files = path_to_folders(backup_file.path) + self._walk_folders(backup_file.path)
-                scanned_files  = scanned_files
+                scanned_files = scanned_files
             return scanned_files
 
         def _compare_scanned_files(self, scanned_files, diff_info):

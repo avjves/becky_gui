@@ -69,3 +69,13 @@ class LocalDifferentialScannerTests(TestCase):
         found_files_paths = [f.path for f in found_files]
         self.assertSetEqual(set(found_files_paths), set([files[0]])) #On second iteration the found files should JUST be the changed file
 
+    def test_scan_nonexistent_file(self):
+        """
+        Attempts to scan files from a path that doesn't exist.
+        """
+        folder_to_scan = TemporaryDirectory()
+        backup_file = self.backup_model.add_backup_file(folder_to_scan.name)
+        folder_to_scan.cleanup()
+        backup_info = self.backup_model.run_backup()
+        self.assertSetEqual(set(backup_info['new_files']), set()) # No file should've been found
+
