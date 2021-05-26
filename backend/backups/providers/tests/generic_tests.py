@@ -74,16 +74,19 @@ class GenericTests(TestCase):
         self.backup_model.add_backup_file(test_directory.name)
         backup_info = self.backup_model.run_backup()
         timestamp = backup_info['timestamp']
-        remote_files, remote_folders = self.backup_model.get_remote_files('/', timestamp)
+        remote_files = self.backup_model.get_remote_files('/', timestamp)
+        remote_files, remote_folders = [f.filename for f in remote_files if f.file_type == 'file'], [f.filename for f in remote_files if f.file_type == 'directory']
         self.assertSetEqual(set(remote_files), set(), 'Wrong files returned at {}'.format('/'))
         self.assertSetEqual(set(remote_folders), set(['tmp']), 'Wrong folders returned at {}'.format('/'))
-        remote_files, remote_folders = self.backup_model.get_remote_files(test_directory.name, timestamp)
+        remote_files = self.backup_model.get_remote_files(test_directory.name, timestamp)
+        remote_files, remote_folders = [f.filename for f in remote_files if f.file_type == 'file'], [f.filename for f in remote_files if f.file_type == 'directory']
         actual_files = [f for f in os.listdir(test_directory.name) if not os.path.isdir(join_file_path(test_directory.name, f))]
         actual_folders = [f for f in os.listdir(test_directory.name) if os.path.isdir(join_file_path(test_directory.name, f))]
         self.assertSetEqual(set(remote_files), set(actual_files), 'Wrong files returned at {}'.format(test_directory.name))
         self.assertSetEqual(set(remote_folders), set(actual_folders), 'Wrong folders returned at {}'.format(test_directory.name))
         random_folder = random.choice([f for f in glob.glob(test_directory.name + '/**/*', recursive=True) if os.path.isdir(f)])
-        remote_files, remote_folders = self.backup_model.get_remote_files(random_folder, timestamp)
+        remote_files = self.backup_model.get_remote_files(random_folder, timestamp)
+        remote_files, remote_folders = [f.filename for f in remote_files if f.file_type == 'file'], [f.filename for f in remote_files if f.file_type == 'directory']
         actual_files = [f for f in os.listdir(random_folder) if not os.path.isdir(join_file_path(random_folder, f))]
         actual_folders = [f for f in os.listdir(random_folder) if os.path.isdir(join_file_path(random_folder, f))]
         self.assertSetEqual(set(remote_files), set(actual_files), 'Wrong files returned at {}'.format(random_folder))
@@ -112,16 +115,19 @@ class GenericTests(TestCase):
 
         for i in range(0, 5):
             timestamp = backup_infos[i]['timestamp']
-            remote_files, remote_folders = self.backup_model.get_remote_files('/', timestamp)
+            remote_files = self.backup_model.get_remote_files('/', timestamp)
+            remote_files, remote_folders = [f.filename for f in remote_files if f.file_type == 'file'], [f.filename for f in remote_files if f.file_type == 'directory']
             self.assertSetEqual(set(remote_files), set(), 'Wrong files returned at {} on iteration {}'.format('/', i))
             self.assertSetEqual(set(remote_folders), set(['tmp']), 'Wrong folders returned at {} on iteration {}'.format('/', i))
-            remote_files, remote_folders = self.backup_model.get_remote_files(test_directory.name + '/helper', timestamp)
+            remote_files = self.backup_model.get_remote_files(test_directory.name + '/helper', timestamp)
+            remote_files, remote_folders = [f.filename for f in remote_files if f.file_type == 'file'], [f.filename for f in remote_files if f.file_type == 'directory']
             actual_files = [f.split('/')[-1] for f in backup_files[i][0] if f.rsplit('/', 1)[0].endswith('/helper')]
             actual_folders = [f.split('/')[-1] for f in backup_files[i][1] if f.rsplit('/', 1)[0].endswith('/helper')]
             self.assertSetEqual(set(remote_files), set(actual_files), 'Wrong files returned at {} on iteration {}'.format(test_directory.name + '/helper', i))
             self.assertSetEqual(set(remote_folders), set(actual_folders), 'Wrong folders returned at {} on iteration {}'.format(test_directory.name + '/helper', i))
             random_folder = random.choice(backup_files[i][1])
-            remote_files, remote_folders = self.backup_model.get_remote_files(random_folder, timestamp)
+            remote_files = self.backup_model.get_remote_files(random_folder, timestamp)
+            remote_files, remote_folders = [f.filename for f in remote_files if f.file_type == 'file'], [f.filename for f in remote_files if f.file_type == 'directory']
             actual_files = [f.split('/')[-1] for f in backup_files[i][0] if f.rsplit('/', 1)[0].endswith(random_folder)]
             actual_folders = [f.split('/')[-1] for f in backup_files[i][1] if f.rsplit('/', 1)[0].endswith(random_folder)]
             self.assertSetEqual(set(remote_files), set(actual_files), 'Wrong files returned at {} on iteration {}'.format(random_folder, i))
@@ -144,9 +150,11 @@ class GenericTests(TestCase):
         os.makedirs(test_path)
         open(test_f_path, "w").write('test')
         second_backup_info = self.backup_model.run_backup()
-        remote_files, remote_folders = self.backup_model.get_remote_files(test_directory.name, first_backup_info['timestamp'])
+        remote_files = self.backup_model.get_remote_files(test_directory.name, first_backup_info['timestamp'])
+        remote_files, remote_folders = [f.filename for f in remote_files if f.file_type == 'file'], [f.filename for f in remote_files if f.file_type == 'directory']
         self.assertListEqual(remote_files, ['test'], "Files don't match!")
         self.assertListEqual(remote_folders, [], "Folders don't match!")
-        remote_files, remote_folders = self.backup_model.get_remote_files(test_directory.name, second_backup_info['timestamp'])
-        self.assertListEqual(remote_files, ['test'], "Files don't match!")
+        remote_files = self.backup_model.get_remote_files(test_directory.name, second_backup_info['timestamp'])
+        remote_files, remote_folders = [f.filename for f in remote_files if f.file_type == 'file'], [f.filename for f in remote_files if f.file_type == 'directory']
+        self.assertListEqual(remote_files, [], "Files don't match!")
         self.assertListEqual(remote_folders, ['test'], "Folders don't match!")

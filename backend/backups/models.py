@@ -73,17 +73,13 @@ class Backup(models.Model):
             if item.path not in newest_items or item.creation_time > newest_item_ts.get(item.path, 0):
                 newest_items[item.path] = item
                 newest_item_ts[item.path] = item.creation_time
-        match_files = list(newest_items.values())
 
-        newest_items = {}
-        newest_item_ts = {}
         for item in match_folders:
             if item.path not in newest_items or item.creation_time > newest_item_ts.get(item.path, 0):
                 newest_items[item.path] = item
                 newest_item_ts[item.path] = item.creation_time
-        match_folders = list(newest_items.values())
-
-        return [f.filename for f in match_files], [f.filename for f in match_folders]
+        
+        return newest_items.values()
 
     def get_backup_timestamps(self):
         """

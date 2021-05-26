@@ -168,6 +168,7 @@ class FilesView(View):
         backup_model = self._get_backup_model(backup_id)
         files = os.listdir(path)
         file_objects = [self._generate_file_object(path, f, backup_model) for f in files]
+        file_objects.sort(key=natsort.natsort_keygen(key=lambda x: x['filename']))
         return JsonResponse({'files': file_objects})
 
     def _get_backup_model(self, backup_id):
@@ -238,12 +239,10 @@ class RestoreFilesView(FilesView):
         backup_timestamp = request.GET.get('backup_timestamp')
         backup_timestamp = unix_timestamp_to_dt(backup_timestamp)
         backup_model = self._get_backup_model(backup_id)
-        files, directories = backup_model.get_remote_files(path, backup_timestamp)
-        file_objects = [self._generate_file_object(path, f, backup_model, 'file') for f in files]
-        directory_objects = [self._generate_file_object(path, f, backup_model, 'directory') for f in directories]
-        objects = file_objects + directory_objects
+        files = backup_model.get_remote_files(path, backup_timestamp)
+        objects = [self._generate_file_object(path, f, backup_model) for f in files]
         objects = natsort.natsorted(objects, key=lambda x: x['filename'])
-        return JsonResponse({'files': file_objects + directory_objects})
+        return JsonResponse({'files': objects})
 
     def post(self, request, backup_id, **kwargs):
         data = json.loads(request.body)
@@ -256,16 +255,16 @@ class RestoreFilesView(FilesView):
         return HttpResponse(status=200)
 
 
-    def _generate_file_object(self, directory, filename, backup_model, file_type):
+    def _generate_file_object(self, directory, f, backup_model):
         """
         Given a path, creates a file object.
         TODO: Check if said file is selected for backups.
         """
-        level = self._calculate_directory_level(join_file_path(directory, filename))
-        obj = {'filename': filename, 'selected': False, 'directory': directory, 'level': level}
-        obj['selected'] = self._check_file_selection(directory, filename, backup_model)
-        obj['file_type'] = file_type
-        if file_type == 'directory':
+        level = self._calculate_directory_level(join_file_path(directory, f.filename))
+        obj = {'filename': f.filename, 'selected': False, 'directory': directory, 'level': level}
+        obj['selected'] = self._check_file_selection(directory, f.filename, backup_model)
+        obj['file_type'] = f.file_type
+        if f.file_type == 'directory':
             obj['files'] = []
         return obj
 
