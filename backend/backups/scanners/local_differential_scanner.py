@@ -4,7 +4,7 @@ import shelve
 import pathlib
 import datetime
 
-from django.db import models
+from django.db import models, transaction
 from django.utils.timezone import make_aware
 
 from backups.scanners.base_scanner import BaseScanner
@@ -53,14 +53,15 @@ class LocalDifferentialScanner(BaseScanner):
 
         def _get_differential_information(self, files):
             diffs = []
-            for f in files:
-                found_diff, created = DifferentialInformation.objects.get_or_create(backup=self.backup_model, path=f)
-                current_modified = int(os.path.getmtime(f))
-                current_modified = make_aware(datetime.datetime.fromtimestamp(current_modified))
-                found_diff.previous_modified = found_diff.current_modified
-                found_diff.current_modified = current_modified
-                found_diff.save()
-                diffs.append(found_diff)
+            with transaction.atomic():
+                for f in files:
+                    found_diff, created = DifferentialInformation.objects.get_or_create(backup=self.backup_model, path=f)
+                    current_modified = int(os.path.getmtime(f))
+                    current_modified = make_aware(datetime.datetime.fromtimestamp(current_modified))
+                    found_diff.previous_modified = found_diff.current_modified
+                    found_diff.current_modified = current_modified
+                    found_diff.save()
+                    diffs.append(found_diff)
             return diffs
 
         def _scan_local_files(self, backup_file):
@@ -112,4 +113,5 @@ class LocalDifferentialScanner(BaseScanner):
                 files.add(root)
                 for f in dir_files:
                     files.add(os.path.join(root, f))
+                    self.backup_model.set_status(status_message='Scanning for files from {} \t {} files found so far...'.format(path, len(files)), percentage=None, running=True)
             return list(files)

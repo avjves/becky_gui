@@ -287,6 +287,11 @@ class Backup(models.Model):
         """
         Sets the current status of the backup model to the given status.
         """
+        if not percentage:
+            if self.statuses.last():
+                percentage = self.statuses.last().percentage
+            else:
+                percentage = 0
         with transaction.atomic():
             new_status = BackupStatus(backup=self, message=status_message, percentage=percentage, running=running)
             self.statuses.all().delete()
