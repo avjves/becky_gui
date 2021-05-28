@@ -19,7 +19,7 @@ class SettingsView extends React.Component {
     }
 
     fetchSettings() {
-        axios.get("http://localhost:8000/settings/", {})
+        axios.get("http://localhost:6701/settings/", {})
         .then((data) => {
             this.setState({settings: data.data.settings});
         })
@@ -30,7 +30,7 @@ class SettingsView extends React.Component {
     }
 
     saveSettings(settings) {
-        axios.post("http://localhost:8000/settings/", {
+        axios.post("http://localhost:6701/settings/", {
             settings: settings
         })
         .then((data) => {
@@ -46,7 +46,7 @@ class SettingsView extends React.Component {
 
     render() {
         return (
-            <SettingsTable settings={this.state.settings} saveSettings={this.saveSettings} />            
+            <SettingsTable settings={this.state.settings} saveSettings={this.saveSettings} />
         );
     }
 }

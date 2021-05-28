@@ -23,7 +23,7 @@ class App extends React.Component {
     }
 
     getCSRF() {
-        fetch("http://localhost:8000/api/csrf/", {
+        fetch("http://localhost:6701/api/csrf/", {
             credentials: "include",
         })
         .then((res) => {
@@ -37,7 +37,7 @@ class App extends React.Component {
     }
 
     getSession() {
-        fetch("http://localhost:8000/api/session/", {
+        fetch("http://localhost:6701/api/session/", {
             credentials: "include",
         })
         .then((res) => res.json())
@@ -56,7 +56,7 @@ class App extends React.Component {
     }
 
     setAuthenticated(bool) {
-       this.setState({isAuthenticated: bool}); 
+       this.setState({isAuthenticated: bool});
     }
 
     render() {

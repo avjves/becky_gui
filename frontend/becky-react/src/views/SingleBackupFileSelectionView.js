@@ -24,26 +24,26 @@ class SingleBackupFileSelectionView extends React.Component {
     }
 
     addFileSelection(filePath, selected) {
-        var currentSelections = this.state.selections; 
+        var currentSelections = this.state.selections;
         currentSelections[filePath] = selected;
         this.setState({selections: currentSelections});
     }
 
     async fetchFilesByPath(path) {
-        return axios.get("http://localhost:8000/backups/files/" + this.props.backup.id, {
+        return axios.get("http://localhost:6701/backups/files/" + this.props.backup.id, {
             params: {
                 path: path,
             }
         })
     }
-    
+
     render() {
         var currentSelections = Object.keys(this.props.backup.selections);
         return (
             <div>
                 <FileSelectorTreeView fetchFilesByPath={this.fetchFilesByPath} addFileSelection={this.addFileSelection} />
                 <hr />
-                {currentSelections.length > 0 && 
+                {currentSelections.length > 0 &&
                     <div>
                         <Typography variant="h6"> Currently saved selections: </Typography>
                         <div>

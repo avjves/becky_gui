@@ -27,7 +27,7 @@ class SingleBackupView extends React.Component {
 
     fetchBackupData() {
         if(this.props.backupId != -1) { // Not a new backup
-            fetch("http://localhost:8000/backups/backup/" + this.props.backupId, {
+            fetch("http://localhost:6701/backups/backup/" + this.props.backupId, {
                 method: 'GET',
                 credentials: "include",
             })
@@ -46,7 +46,7 @@ class SingleBackupView extends React.Component {
         var currentBackup = this.state.backup;
         for(var key in updateValues) {
             if(updateValues[key] != null) {
-               currentBackup[key] = updateValues[key] 
+               currentBackup[key] = updateValues[key]
             }
         }
         this.setState({backup: currentBackup}, this.advanceView);
@@ -75,16 +75,16 @@ class SingleBackupView extends React.Component {
         <Router history={history}>
             <Switch>
                 <Route path="/backups/edit/:backupId/0">
-                    <SingleBackupInitialInfoView updateBackup={this.updateBackup} backup={this.state.backup}/> 
+                    <SingleBackupInitialInfoView updateBackup={this.updateBackup} backup={this.state.backup}/>
                 </Route>
                 <Route path="/backups/edit/:backupId/1">
-                    <SingleBackupFileSelectionView updateBackup={this.updateBackup} backup={this.state.backup}/> 
+                    <SingleBackupFileSelectionView updateBackup={this.updateBackup} backup={this.state.backup}/>
                 </Route>
                 <Route path="/backups/edit/:backupId/2">
-                    <SingleBackupScannerSettingsView updateBackup={this.updateBackup} backup={this.state.backup}/> 
+                    <SingleBackupScannerSettingsView updateBackup={this.updateBackup} backup={this.state.backup}/>
                 </Route>
                 <Route path="/backups/edit/:backupId/3">
-                    <SingleBackupProviderSettingsView updateBackup={this.updateBackup} backup={this.state.backup}/> 
+                    <SingleBackupProviderSettingsView updateBackup={this.updateBackup} backup={this.state.backup}/>
                 </Route>
             </Switch>
         </Router>

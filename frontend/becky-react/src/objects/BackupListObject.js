@@ -10,7 +10,7 @@ class BackupListObject extends React.Component {
     }
 
     run() {
-        fetch('http://localhost:8000/backups/run/' + this.props.backup.id + "/", {
+        fetch('http://localhost:6701/backups/run/' + this.props.backup.id + "/", {
             method: 'GET',
             credentials: "include",
         });

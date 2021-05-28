@@ -36,8 +36,8 @@ CSRF_USE_SESSIONS=False
 CSRF_HTTP_ONLY=False
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:3000",
+    "http://localhost:6701",
+    "http://localhost:6700",
 ]
 
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']

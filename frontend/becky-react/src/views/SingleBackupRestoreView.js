@@ -29,7 +29,7 @@ class SingleBackupRestoreView extends React.Component {
     }
 
     async fetchRestoreFilesByPath(path) {
-        return axios.get("http://localhost:8000/backups/restore/files/" + this.props.backupId, {
+        return axios.get("http://localhost:6701/backups/restore/files/" + this.props.backupId, {
             params: {
                 path: path,
                 backup_timestamp: this.state.currentIterationTimestamp,
@@ -39,7 +39,7 @@ class SingleBackupRestoreView extends React.Component {
     }
 
     fetchBackupIterations() {
-        fetch("http://localhost:8000/backups/backup/" + this.props.backupId, {
+        fetch("http://localhost:6701/backups/backup/" + this.props.backupId, {
             method: 'GET',
             credentials: "include",
         })
@@ -59,7 +59,7 @@ class SingleBackupRestoreView extends React.Component {
         var currentSelections = this.state.restoreSelections;
         if(selection in currentSelections) {
             console.log("Deleting a file selection", selection);
-            delete currentSelections[selection] 
+            delete currentSelections[selection]
         }
         else {
             console.log("Adding a file selection", selection);
@@ -86,7 +86,7 @@ class SingleBackupRestoreView extends React.Component {
     }
 
     startRestoration() {
-        return axios.post("http://localhost:8000/backups/restore/" + this.props.backupId + "/", {
+        return axios.post("http://localhost:6701/backups/restore/" + this.props.backupId + "/", {
             selections: this.state.restoreSelections,
             restore_path: this.state.restorePath,
             backup_timestamp: this.state.currentIterationTimestamp,
@@ -128,12 +128,12 @@ class SingleBackupRestoreView extends React.Component {
                                 {timestamps}
                             </Select>
                 </FormControl>
- 
+
                 <hr />
                 {fileSelector}
                 <div className="col-11">
                     <form>
-                        <TextField style={{'width': '100%'}} id="restore_path" label="Restore path:" onChange={this.onChangeRestorePath} />                
+                        <TextField style={{'width': '100%'}} id="restore_path" label="Restore path:" onChange={this.onChangeRestorePath} />
                     </form>
                 </div>
                 <hr />

@@ -20,7 +20,7 @@ class ProgressBar extends React.Component {
     }
 
     fetchCurrentStatus() {
-        axios.get("http://localhost:8000/backups/status/")
+        axios.get("http://localhost:6701/backups/status/")
         .then((data) => {
             this.setState({
                 statusMessage: data.data.status_message,

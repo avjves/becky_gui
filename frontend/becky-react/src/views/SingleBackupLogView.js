@@ -28,7 +28,7 @@ class SingleBackupLogView extends React.Component {
     }
 
     fetchLogs() {
-        axios.get("http://localhost:8000/backups/logs/" + this.props.backupId, {
+        axios.get("http://localhost:6701/backups/logs/" + this.props.backupId, {
             params: {
                 current_page: this.state.currentPage,
                 rows_per_page: this.state.rowsPerPage,
@@ -45,7 +45,7 @@ class SingleBackupLogView extends React.Component {
 
     nextPage() {
         if(!(this.state.logs.length < this.state.rowsPerPage)) {
-           this.setState({currentPage: this.state.currentPage + 1}, this.fetchLogs); 
+           this.setState({currentPage: this.state.currentPage + 1}, this.fetchLogs);
         }
     }
 
@@ -58,7 +58,7 @@ class SingleBackupLogView extends React.Component {
 
     onToggleLogLevel(event) {
         var level = event.target.name;
-        var checked = event.target.checked; 
+        var checked = event.target.checked;
         var currentLevels = this.state.levelsToShow;
         currentLevels[level] = checked;
         this.setState({currentPage: 0, levelsToShow: currentLevels}, this.fetchLogs);
@@ -76,7 +76,7 @@ class SingleBackupLogView extends React.Component {
                     <FormControlLabel control={<Checkbox defaultChecked={false} onChange={this.onToggleLogLevel} name="debug" />} label="Debug" />
                 </FormGroup>
                 <hr />
-                <LogTable logs={this.state.logs} nextPage={this.nextPage} previousPage={this.previousPage} /> 
+                <LogTable logs={this.state.logs} nextPage={this.nextPage} previousPage={this.previousPage} />
             </div>
         );
     }
