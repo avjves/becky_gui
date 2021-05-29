@@ -249,7 +249,11 @@ class Backup(models.Model):
         it first generates the database and then backups everything.
         On subsequent runs it just scans for new/changed files and backups those.
         """
+        last_backup, _ = self.metadata.get_or_create(key='last_cron_backup') 
         current_timestamp = timezone.now()
+        last_backup.value = current_timestamp.timestamp()
+        last_backup.save()
+
         scanner = self.get_file_scanner()
         provider = self.get_backup_provider()
         logger = self._get_logger()
@@ -296,6 +300,29 @@ class Backup(models.Model):
             new_status = BackupStatus(backup=self, message=status_message, percentage=percentage, running=running)
             self.statuses.all().delete()
             new_status.save()
+
+    def should_run_now(self, timestamp):
+        """
+        Function called by the cronjob runner.
+        This function checks the received timestamp and checks whether
+        this backup should be run or not, given it's own backup schedule.
+        """
+        last_backup, _ = self.metadata.get_or_create(key='last_cron_backup')
+        last_backup_timestamp = float(last_backup.value) if last_backup.value else 0
+        backup_schedule = self.parameters.get(key='backup_schedule').value
+        allowed_diff = 0
+        if backup_schedule == 'minute':
+            allowed_diff = 60
+        elif backup_schedule == 'hour':
+            allowed_diff = 60*60
+        elif backup_schedule == 'day':
+            allowed_diff = 60*60*24
+        if timestamp - last_backup_timestamp > allowed_diff:
+            return True
+        else:
+            return False
+
+
 
     def _get_logger(self):
         """
