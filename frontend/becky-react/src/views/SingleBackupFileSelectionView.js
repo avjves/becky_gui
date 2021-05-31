@@ -30,7 +30,7 @@ class SingleBackupFileSelectionView extends React.Component {
     }
 
     async fetchFilesByPath(path) {
-        return axios.get("http://localhost:6701/backups/files/" + this.props.backup.id, {
+        return axios.get("http://localhost:6701/api/backups/files/" + this.props.backup.id, {
             params: {
                 path: path,
             }

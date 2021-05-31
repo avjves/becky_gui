@@ -23,7 +23,7 @@ class App extends React.Component {
     }
 
     getCSRF() {
-        fetch("http://localhost:6701/api/csrf/", {
+        fetch("http://localhost:6701/api/auth/csrf/", {
             credentials: "include",
         })
         .then((res) => {
@@ -37,7 +37,7 @@ class App extends React.Component {
     }
 
     getSession() {
-        fetch("http://localhost:6701/api/session/", {
+        fetch("http://localhost:6701/api/auth/session/", {
             credentials: "include",
         })
         .then((res) => res.json())

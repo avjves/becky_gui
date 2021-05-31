@@ -25,7 +25,7 @@ class BackupView extends React.Component {
 
 
     async addNewBackup(backup) {
-        fetch("http://localhost:6701/backups/edit/" + backup.id + "/", {
+        fetch("http://localhost:6701/api/backups/edit/" + backup.id + "/", {
             method: 'POST',
             credentials: "include",
             body: JSON.stringify(backup),
@@ -44,7 +44,7 @@ class BackupView extends React.Component {
     }
 
     fetchBackups() {
-        fetch("http://localhost:6701/backups/", {
+        fetch("http://localhost:6701/api/backups/", {
             method: 'GET',
             credentials: "include",
         })
@@ -60,7 +60,7 @@ class BackupView extends React.Component {
 
 
     deleteBackup(backupId) {
-        axios.post("http://localhost:6701/backups/delete/" + backupId + "/", {
+        axios.post("http://localhost:6701/api/backups/delete/" + backupId + "/", {
         })
         .then((data) => {
             this.fetchBackups();

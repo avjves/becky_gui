@@ -28,7 +28,7 @@ class SingleBackupLogView extends React.Component {
     }
 
     fetchLogs() {
-        axios.get("http://localhost:6701/backups/logs/" + this.props.backupId, {
+        axios.get("http://localhost:6701/api/backups/logs/" + this.props.backupId, {
             params: {
                 current_page: this.state.currentPage,
                 rows_per_page: this.state.rowsPerPage,

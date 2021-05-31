@@ -19,7 +19,7 @@ class SettingsView extends React.Component {
     }
 
     fetchSettings() {
-        axios.get("http://localhost:6701/settings/", {})
+        axios.get("http://localhost:6701/api/settings/", {})
         .then((data) => {
             this.setState({settings: data.data.settings});
         })
@@ -30,7 +30,7 @@ class SettingsView extends React.Component {
     }
 
     saveSettings(settings) {
-        axios.post("http://localhost:6701/settings/", {
+        axios.post("http://localhost:6701/api/settings/", {
             settings: settings
         })
         .then((data) => {

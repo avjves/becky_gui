@@ -17,7 +17,7 @@ class LoginView extends React.Component {
     login(event) {
         event.preventDefault();
         console.log(this.state);
-        fetch("http://localhost:6701/api/login/", {
+        fetch("http://localhost:6701/api/auth/login/", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

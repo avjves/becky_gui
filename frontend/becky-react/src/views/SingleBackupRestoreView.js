@@ -29,7 +29,7 @@ class SingleBackupRestoreView extends React.Component {
     }
 
     async fetchRestoreFilesByPath(path) {
-        return axios.get("http://localhost:6701/backups/restore/files/" + this.props.backupId, {
+        return axios.get("http://localhost:6701/api/backups/restore/files/" + this.props.backupId, {
             params: {
                 path: path,
                 backup_timestamp: this.state.currentIterationTimestamp,
@@ -39,7 +39,7 @@ class SingleBackupRestoreView extends React.Component {
     }
 
     fetchBackupIterations() {
-        fetch("http://localhost:6701/backups/backup/" + this.props.backupId, {
+        fetch("http://localhost:6701/api/backups/backup/" + this.props.backupId, {
             method: 'GET',
             credentials: "include",
         })
@@ -86,7 +86,7 @@ class SingleBackupRestoreView extends React.Component {
     }
 
     startRestoration() {
-        return axios.post("http://localhost:6701/backups/restore/" + this.props.backupId + "/", {
+        return axios.post("http://localhost:6701/api/backups/restore/" + this.props.backupId + "/", {
             selections: this.state.restoreSelections,
             restore_path: this.state.restorePath,
             backup_timestamp: this.state.currentIterationTimestamp,
