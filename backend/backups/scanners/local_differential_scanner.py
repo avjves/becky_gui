@@ -114,4 +114,6 @@ class LocalDifferentialScanner(BaseScanner):
                 for f in dir_files:
                     files.add(os.path.join(root, f))
                     self.backup_model.set_status(status_message='Scanning for files from {} \t {} files found so far...'.format(path, len(files)), percentage=None, running=True)
+                    if len(files) % 100 == 0:
+                        self._log('DEBUG', 'Found {} new files from {}.'.format(len(files), path))
             return list(files)
