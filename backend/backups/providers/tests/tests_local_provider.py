@@ -2,7 +2,6 @@ import json
 from tempfile import TemporaryDirectory
 from django.test import TestCase
 from backups.models import Backup
-# import backups.providers.tests.generic_tests as generic_tests
 from backups.providers.tests.agnostic_tests import AgnosticTests
 
 class LocalProviderTests(TestCase):
