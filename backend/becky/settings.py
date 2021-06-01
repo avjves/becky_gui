@@ -38,6 +38,7 @@ CSRF_HTTP_ONLY=False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:6701",
     "http://localhost:6700",
+    "http://localhost:3000",
 ]
 
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
