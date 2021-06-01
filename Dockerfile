@@ -8,7 +8,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt update
 RUN apt install python3-pip npm -y
 RUN apt install nginx -y
-RUN apt install s3cmd -y
 
 #
 EXPOSE 80
